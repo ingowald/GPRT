@@ -35,11 +35,6 @@
 #include "MathConstants.slangh"
 #include "Vector.h"
 #include "Matrix.h"
-// #include "linalg.h"
-// using namespace linalg;
-// using namespace linalg::detail; // causes conflicts
-// using namespace linalg::aliases;
-// using namespace linalg::ostream_overloads;
 
 #include <stdint.h>
 #include <sys/types.h>
@@ -120,14 +115,14 @@ template <typename T> struct _GPRTCallableOf;
 template <typename ...T> struct _GPRTComputeOf;
 template <typename T> struct _GPRTGeomOf;
 template <typename T> struct _GPRTGeomTypeOf;
-template <typename T> using GPRTRayGenOf = struct _GPRTRayGenOf<T> *;
-template <typename T> using GPRTBufferOf = struct _GPRTBufferOf<T> *;
-template <typename T> using GPRTTextureOf = struct _GPRTTextureOf<T> *;
-template <typename T> using GPRTMissOf = struct _GPRTMissOf<T> *;
-template <typename T> using GPRTCallableOf = struct _GPRTCallableOf<T> *;
+template <typename T> using GPRTRayGenOf     = struct _GPRTRayGenOf<T> *;
+template <typename T> using GPRTBufferOf     = struct _GPRTBufferOf<T> *;
+template <typename T> using GPRTTextureOf    = struct _GPRTTextureOf<T> *;
+template <typename T> using GPRTMissOf       = struct _GPRTMissOf<T> *;
+template <typename T> using GPRTCallableOf   = struct _GPRTCallableOf<T> *;
 template <typename ...T> using GPRTComputeOf = struct _GPRTComputeOf<T...> *;
-template <typename T> using GPRTGeomOf = struct _GPRTGeomOf<T> *;
-template <typename T> using GPRTGeomTypeOf = struct _GPRTGeomTypeOf<T> *;
+template <typename T> using GPRTGeomOf       = struct _GPRTGeomOf<T> *;
+template <typename T> using GPRTGeomTypeOf   = struct _GPRTGeomTypeOf<T> *;
 
 // GPRTPrograms are just SPIR-V binaries under the hood
 using GPRTProgram = std::vector<uint8_t>;
@@ -144,15 +139,19 @@ static void runtime_assert(bool condition, const char* message) {
 }
 
 template<typename T>
-void handleArg(std::array<char, PUSH_CONSTANTS_LIMIT>& buffer, size_t& offset, const T& arg) {
+void handleArg(std::array<char, PUSH_CONSTANTS_LIMIT>& buffer,
+               size_t& offset,
+               const T& arg)
+{
   static_assert(std::is_trivially_copyable<T>::value, "Non-trivially copyable types are not supported.");
   std::memcpy(buffer.data() + offset, &arg, sizeof(T));
   offset += sizeof(T);
 }
 
 template <typename... Args>
-constexpr size_t totalSizeOf() {
-    return (sizeof(Args) + ... + 0);
+constexpr size_t totalSizeOf()
+{
+  return (sizeof(Args) + ... + 0);
 }
 
 /*! launch params (or "globals") are variables that can be put into
@@ -220,7 +219,8 @@ typedef enum {
 } GPRTFormat;
 
 /*! currently supported texture filter modes */
-typedef enum { GPRT_FILTER_NEAREST = VK_FILTER_NEAREST, GPRT_FILTER_LINEAR = VK_FILTER_LINEAR } GPRTFilter;
+typedef enum { GPRT_FILTER_NEAREST = VK_FILTER_NEAREST,
+               GPRT_FILTER_LINEAR = VK_FILTER_LINEAR } GPRTFilter;
 
 /*! currently supported texture filter modes */
 typedef enum {
@@ -259,15 +259,21 @@ gprtGeomDestroy(GPRTGeomOf<T> geometry) {
 }
 
 /**
- * @brief Returns a pointer to the parameters section of the record for this geometry, made
- * available on the device through the second parameter in GPRT_CLOSEST_HIT_PROGRAM,
- * GPRT_ANY_HIT_PROGRAM, GPRT_INTERSECTION_PROGRAM, GPRT_VERTEX_PROGRAM, and/or GPRT_PIXEL_PROGRAM.
- * Note, call @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
+ * @brief Returns a pointer to the parameters section of the record
+ * for this geometry, made available on the device through the second
+ * parameter in GPRT_CLOSEST_HIT_PROGRAM, GPRT_ANY_HIT_PROGRAM,
+ * GPRT_INTERSECTION_PROGRAM, GPRT_VERTEX_PROGRAM, and/or
+ * GPRT_PIXEL_PROGRAM.  Note, call @ref gprtBuildShaderBindingTable
+ * for these parameters to be uploaded to the device.
  *
- * @param geometry The geometry who's record pointer is to be returned.
+ * @param geometry The geometry who's record pointer is to be
+ * returned.
+ *
  * @returns a pointer to the parameters section of the record.
  */
-GPRT_API void *gprtGeomGetParameters(GPRTGeom geometry, int deviceID GPRT_IF_CPP(= 0));
+GPRT_API
+void *gprtGeomGetParameters(GPRTGeom geometry,
+                            int deviceID GPRT_IF_CPP(= 0));
 
 /**
  * @brief Returns a pointer to the parameters section of the record for this geometry, made
@@ -276,73 +282,88 @@ GPRT_API void *gprtGeomGetParameters(GPRTGeom geometry, int deviceID GPRT_IF_CPP
  * Note, call  @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
  *
  * @tparam T The type of the parameters structure stored in the record
- * @param geometry The geometry who's record pointer is to be returned.
- * @returns a pointer to the parameters section of the record.
+ * @param geometry The geometry who's record pointer is to be
+ * returned.  @returns a pointer to the parameters section of the
+ * record.
  */
 template <typename T>
-T *
-gprtGeomGetParameters(GPRTGeomOf<T> geometry, int deviceID GPRT_IF_CPP(= 0)) {
+T *gprtGeomGetParameters(GPRTGeomOf<T> geometry,
+                         int deviceID GPRT_IF_CPP(= 0))
+{
   return (T *) gprtGeomGetParameters((GPRTGeom) geometry, deviceID);
 }
 
 /**
- * @brief Copies the contents of the given parameters into the geometry record. Note, call
- * @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
+ * @brief Copies the contents of the given parameters into the
+ * geometry record. Note, call @ref gprtBuildShaderBindingTable for
+ * these parameters to be uploaded to the device.
  *
- * @param geometry The geometry who's record to assign the parameters to.
- * @param parameters A pointer to a parameters structure. Assumed to be "recordSize" bytes,
- * as specified by @ref gprtGeomTypeCreate.
+ * @param geometry The geometry who's record to assign the parameters
+ * to.
+ *
+ * @param parameters A pointer to a parameters structure. Assumed to
+ * be "recordSize" bytes, as specified by @ref gprtGeomTypeCreate.
  */
 GPRT_API void gprtGeomSetParameters(GPRTGeom geometry, void *parameters, int deviceID GPRT_IF_CPP(= 0));
 
 /**
- * @brief Copies the contents of the given parameters into the geometry record. Note, call
- * @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
- * @tparam T The type of the parameters structure stored in the record.
+ * @brief Copies the contents of the given parameters into the
+ * geometry record. Note, call
+ *
+ * @ref gprtBuildShaderBindingTable for these parameters to be
+ * uploaded to the device.
+ *
+ * @tparam T The type of the parameters structure stored in the
+ * record.
+ *
  * @param geometry The geometry who's record to assign the parameters to.
- * @param parameters A pointer to a parameters structure. Assumed to be "recordSize" bytes,
- * as specified by @ref gprtGeomTypeCreate.
+ *
+ * @param parameters A pointer to a parameters structure. Assumed to
+ * be "recordSize" bytes, as specified by @ref gprtGeomTypeCreate.
  */
 template <typename T>
-void
-gprtGeomSetParameters(GPRTGeomOf<T> geometry, T *parameters, int deviceID GPRT_IF_CPP(= 0)) {
+void gprtGeomSetParameters(GPRTGeomOf<T> geometry,
+                           T *parameters,
+                           int deviceID GPRT_IF_CPP(= 0))
+{
   gprtGeomSetParameters((GPRTGeom) geometry, (void *) parameters, deviceID);
 }
 
 // ==================================================================
 // "Triangles" functions
 // ==================================================================
-GPRT_API void gprtTrianglesSetVertices(GPRTGeom triangles, GPRTBuffer vertices, uint32_t count,
-                                       uint32_t stride GPRT_IF_CPP(= sizeof(float3)), uint32_t offset GPRT_IF_CPP(= 0));
+GPRT_API
+void gprtTrianglesSetVertices(GPRTGeom triangles,
+                              GPRTBuffer vertices,
+                              uint32_t count,
+                              uint32_t stride GPRT_IF_CPP(= sizeof(float3)),
+                              uint32_t offset GPRT_IF_CPP(= 0));
 
 template <typename T1, typename T2>
-void
-gprtTrianglesSetVertices(GPRTGeomOf<T1> triangles, GPRTBufferOf<T2> vertices, uint32_t count,
-                         uint32_t stride GPRT_IF_CPP(= sizeof(float3)), uint32_t offset GPRT_IF_CPP(= 0)) {
-  gprtTrianglesSetVertices((GPRTGeom) triangles, (GPRTBuffer) vertices, count, stride, offset);
+void gprtTrianglesSetVertices(GPRTGeomOf<T1> triangles,
+                              GPRTBufferOf<T2> vertices,
+                              uint32_t count,
+                              uint32_t stride GPRT_IF_CPP(= sizeof(float3)),
+                              uint32_t offset GPRT_IF_CPP(= 0))
+{
+  gprtTrianglesSetVertices((GPRTGeom) triangles, (GPRTBuffer) vertices,
+                           count, stride, offset);
 }
 
-// GPRT_API void gprtTrianglesSetMotionVertices(GPRTGeom triangles,
-//                                            /*! number of vertex arrays
-//                                                passed here, the first
-//                                                of those is for t=0,
-//                                                thelast for t=1,
-//                                                everything is linearly
-//                                                interpolated
-//                                                in-between */
-//                                            size_t    numKeys,
-//                                            GPRTBuffer *vertexArrays,
-//                                            size_t count,
-//                                            size_t stride,
-//                                            size_t offset);
-
-GPRT_API void gprtTrianglesSetIndices(GPRTGeom triangles, GPRTBuffer indices, uint32_t count,
-                                      uint32_t stride GPRT_IF_CPP(= sizeof(uint3)), uint32_t offset GPRT_IF_CPP(= 0));
+GPRT_API
+void gprtTrianglesSetIndices(GPRTGeom triangles,
+                             GPRTBuffer indices,
+                             uint32_t count,
+                             uint32_t stride GPRT_IF_CPP(= sizeof(uint3)),
+                             uint32_t offset GPRT_IF_CPP(= 0));
 
 template <typename T1, typename T2>
-void
-gprtTrianglesSetIndices(GPRTGeomOf<T1> triangles, GPRTBufferOf<T2> indices, uint32_t count,
-                        uint32_t stride GPRT_IF_CPP(= sizeof(float3)), uint32_t offset GPRT_IF_CPP(= 0)) {
+void gprtTrianglesSetIndices(GPRTGeomOf<T1> triangles,
+                             GPRTBufferOf<T2> indices,
+                             uint32_t count,
+                             uint32_t stride GPRT_IF_CPP(= sizeof(float3)),
+                             uint32_t offset GPRT_IF_CPP(= 0))
+{
   gprtTrianglesSetIndices((GPRTGeom) triangles, (GPRTBuffer) indices, count, stride, offset);
 }
 
