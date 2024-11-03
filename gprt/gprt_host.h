@@ -615,7 +615,7 @@ GPRT_API void gprtRequestRayRecursionDepth(uint32_t rayRecursionDepth);
 /*! Requests that ray queries be enabled for inline ray tracing support. */
 GPRT_API void gprtRequestRayQueries();
 
-/** creates a new device context with the gives list of devices.
+/** creates a new device context with the given list of devices.
 
   If requested device IDs list if null it implicitly refers to the
   list "0,1,2,...."; if numDevices <= 0 it automatically refers to
@@ -627,39 +627,58 @@ GPRT_API void gprtRequestRayQueries();
   the system
 
   - int gpu=2;gprtContextCreate(&gpu,1) will create a context on GPU #2
-  (where 2 refers to the vulkan device ordinal; from that point on, from
+  (where 2 refers to the vulkan device ordinal; from
   gprt's standpoint (eg, during gprtBufferGetPointer() this GPU will
   from that point on be known as device #0 */
-GPRT_API GPRTContext gprtContextCreate(int32_t *requestedDeviceIDs GPRT_IF_CPP(= nullptr),
-                                       int numDevices GPRT_IF_CPP(= 1));
+GPRT_API
+GPRTContext gprtContextCreate(int32_t *requestedDeviceIDs GPRT_IF_CPP(= nullptr),
+                              int numDevices GPRT_IF_CPP(= 1));
 
-GPRT_API void gprtContextDestroy(GPRTContext context);
+GPRT_API
+void gprtContextDestroy(GPRTContext context);
 
 /**
- * @brief Creates a "compute" handle which describes a compute device program to call and the parameters to
- * pass into that compute device program. Compute programs handle data generation and transformation, but
- * can also trace rays so long as inline ray tracing is used.
+ * @brief Creates a "compute" handle which describes a compute device
+ * program to call and the parameters to pass into that compute device
+ * program. Compute programs handle data generation and
+ * transformation, but can also trace rays so long as inline ray
+ * tracing is used.
  *
  * @param context The GPRT context
- * @param module The GPRT module containing device entrypoint definitions, made with @ref gprtModuleCreate.
- * @param entrypoint The name of the compute program to run, ie the first parameter following
- * GPRT_COMPUTE_PROGRAM in the device code.
+ *
+ * @param module The GPRT module containing device entrypoint
+ * definitions, made with @ref gprtModuleCreate.
+ *
+ * @param entrypoint The name of the compute program to run, ie the
+ * first parameter following GPRT_COMPUTE_PROGRAM in the device code.
  */
-GPRT_API GPRTCompute gprtComputeCreate(GPRTContext context, GPRTModule module, const char *entrypoint);
+GPRT_API
+GPRTCompute gprtComputeCreate(GPRTContext context,
+                              GPRTModule module,
+                              const char *entrypoint);
 
 /**
- * @brief Creates a "compute" handle which describes a compute device program to call and the parameters to
- * pass into that compute device program. Compute programs handle data generation and transformation, but
- * can also trace rays so long as inline ray tracing is used.
+ * @brief Creates a "compute" handle which describes a compute device
+ * program to call and the parameters to pass into that compute device
+ * program. Compute programs handle data generation and
+ * transformation, but can also trace rays so long as inline ray
+ * tracing is used.
  *
  * @param context The GPRT context
- * @param module The GPRT module containing device entrypoint definitions, made with @ref gprtModuleCreate.
- * @param entrypoint The name of the compute program to run, ie the first parameter following
- * GPRT_COMPUTE_PROGRAM in the device code.
+ *
+ * @param module The GPRT module containing device entrypoint
+ * definitions, made with @ref gprtModuleCreate.
+ *
+ * @param entrypoint The name of the compute program to run, ie the
+ * first parameter following GPRT_COMPUTE_PROGRAM in the device code.
  */
 template <typename... Uniforms>
-GPRTComputeOf<Uniforms...> gprtComputeCreate(GPRTContext context, GPRTModule module, std::string entrypoint) {
-  return (GPRTComputeOf<Uniforms...>) gprtComputeCreate(context, module, entrypoint.c_str());
+GPRTComputeOf<Uniforms...> gprtComputeCreate(GPRTContext context,
+                                             GPRTModule module,
+                                             std::string entrypoint)
+{
+  return (GPRTComputeOf<Uniforms...>)
+    gprtComputeCreate(context, module, entrypoint.c_str());
 }
 
 GPRT_API void gprtComputeDestroy(GPRTCompute compute);
@@ -670,28 +689,46 @@ void gprtComputeDestroy(GPRTComputeOf<Uniforms...> compute) {
 }
 
 /**
- * @brief Creates a "raygen" handle which describes a ray generation device program to call and the parameters to
- * pass into that ray generation program. Ray generation programs can trace rays in hardware, and allow for shader
- * execution reordering for improved performance.
+ * @brief Creates a "raygen" handle which describes a ray generation
+ * device program to call and the parameters to pass into that ray
+ * generation program. Ray generation programs can trace rays in
+ * hardware, and allow for shader execution reordering for improved
+ * performance.
  *
  * @param context The GPRT context
- * @param module The GPRT module containing device entrypoint definitions, made with @ref gprtModuleCreate.
- * @param entrypoint The name of the raygen program to run, ie the first parameter following
- * GPRT_RAYGEN_PROGRAM in the device code.
- * @param recordSize The size of the parameters structure that will be passed into that raygen program
+ *
+ * @param module The GPRT module containing device entrypoint
+ * definitions, made with @ref gprtModuleCreate.
+ *
+ * @param entrypoint The name of the raygen program to run, ie the
+ * first parameter following GPRT_RAYGEN_PROGRAM in the device code.
+ *
+ * @param recordSize The size of the parameters structure that will be
+ * passed into that raygen program
  */
-GPRT_API GPRTRayGen gprtRayGenCreate(GPRTContext context, GPRTModule module, const char *entrypoint, size_t recordSize);
+GPRT_API
+GPRTRayGen gprtRayGenCreate(GPRTContext context,
+                            GPRTModule module,
+                            const char *entrypoint,
+                            size_t recordSize);
 
 /**
- * @brief Creates a "raygen" handle which describes a ray generation device program to call and the parameters to
- * pass into that ray generation program. Ray generation programs can trace rays in hardware, and allow for shader
- * execution reordering for improved performance.
+ * @brief Creates a "raygen" handle which describes a ray generation
+ * device program to call and the parameters to pass into that ray
+ * generation program. Ray generation programs can trace rays in
+ * hardware, and allow for shader execution reordering for improved
+ * performance.
  *
- * @tparam T The type of the parameters structure stored in the record.
+ * @tparam T The type of the parameters structure stored in the
+ * record.
+ *
  * @param context The GPRT context
- * @param module The GPRT module containing device entrypoint definitions, made with @ref gprtModuleCreate.
- * @param entrypoint The name of the raygen program to run, ie the first parameter following
- * GPRT_RAYGEN_PROGRAM in the device code.
+ *
+ * @param module The GPRT module containing device entrypoint
+ * definitions, made with @ref gprtModuleCreate.
+ *
+ * @param entrypoint The name of the raygen program to run, ie the
+ * first parameter following GPRT_RAYGEN_PROGRAM in the device code.
  */
 template <typename T>
 GPRTRayGenOf<T>

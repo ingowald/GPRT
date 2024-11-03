@@ -79,11 +79,13 @@ private:
 #pragma clang diagnostic ignored "-Wuser-defined-literals"
 #endif
 
-/// h suffix for "half float" literals.
+_Pragma("GCC diagnostic push")
+_Pragma("GCC diagnostic ignored \"-Wliteral-suffix\"")/// h suffix for "half float" literals.
 inline float16_t operator""h(long double value)
 {
     return float16_t(static_cast<float>(value));
 }
+_Pragma("GCC diagnostic pop")
 
 #if GPRT_MSVC
 #pragma warning(pop)
