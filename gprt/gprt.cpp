@@ -3050,6 +3050,7 @@ struct Context {
 
   size_t getNumHitRecords();
 
+
   Context(int32_t *requestedDeviceIDs, int numRequestedDevices) {
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "GPRT";
@@ -8421,6 +8422,300 @@ void Context::buildPipeline() {
   }
 }
 
+
+GPRT_API
+int gprtFindSuitableDevices(uint32_t *usableDevices, int maxUsableToSearchFor)
+  {
+  VkInstance instance;
+    VkApplicationInfo appInfo;
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "GPRT";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "GPRT";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_2;
+    appInfo.pNext = VK_NULL_HANDLE;
+
+    /// 1. Create Instance
+    std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+#endif
+
+    // Get extensions supported by the instance and store for later use
+    uint32_t instExtCount = 0;
+    std::vector<std::string> supportedInstanceExtensions;
+  std::vector<const char *> enabledDeviceExtensions;
+  std::vector<const char *> enabledInstanceExtensions;
+    vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
+    if (instExtCount > 0) {
+      std::vector<VkExtensionProperties> extensions(instExtCount);
+      if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
+        for (VkExtensionProperties extension : extensions) {
+          supportedInstanceExtensions.push_back(extension.extensionName);
+        }
+      }
+    }
+
+    // Enabled requested instance extensions
+    if (enabledInstanceExtensions.size() > 0) {
+      for (const char *enabledExtension : enabledInstanceExtensions) {
+        // Output message if requested extension is not available
+        if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
+            supportedInstanceExtensions.end()) {
+          std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
+        }
+        instanceExtensions.push_back(enabledExtension);
+      }
+    }
+
+    VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+    VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+    validationFeatures.disabledValidationFeatureCount = 0;
+    validationFeatures.enabledValidationFeatureCount = 1;
+    validationFeatures.pDisabledValidationFeatures = nullptr;
+    validationFeatures.pEnabledValidationFeatures = enabled;
+
+    VkInstanceCreateInfo instanceCreateInfo{};
+    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceCreateInfo.pApplicationInfo = &appInfo;
+    // instanceCreateInfo.pNext = VK_NULL_HANDLE;
+
+    if (requestedFeatures.debugPrintf) {
+      instanceCreateInfo.pNext = &validationFeatures;
+    } else {
+      LOG_WARNING("Debug printf disabled");
+      instanceCreateInfo.pNext = VK_NULL_HANDLE;
+    }
+
+
+    uint32_t glfwExtensionCount = 0;
+    const char **glfwExtensions;
+    if (requestedFeatures.window) {
+      if (!glfwInit()) {
+        LOG_WARNING("Unable to create window. Falling back to headless mode.");
+        requestedFeatures.window = false;
+      } else {
+        if (!glfwVulkanSupported()) {
+          LOG_ERROR("Window requested but unsupported!");
+        }
+        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+        for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
+          instanceExtensions.push_back(glfwExtensions[i]);
+        }
+      }
+    }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
+    // Useful to disable, since some profiling tools don't support this.
+    if (requestedFeatures.debugPrintf) {
+      instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    if (instanceExtensions.size() > 0) {
+      instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
+      instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+    }
+
+    
+    // need this for printf to work
+    const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
+    instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
+    instanceCreateInfo.enabledLayerCount = 1;
+
+    VkResult err;
+
+    err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+    if (err) {
+      LOG_ERROR("failed to create instance! : \n" + errorString(err));
+    }
+
+    // Setup debug printf callback
+    if (requestedFeatures.debugPrintf) {
+      gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+          vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+      gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+          vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+
+      VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
+      debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+      debugUtilsMessengerCI.messageSeverity = 
+          // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
+        // | VK_DEBUG_REPORT_WARNING_BIT_EXT
+        // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
+        // | VK_DEBUG_REPORT_ERROR_BIT_EXT
+        VK_DEBUG_REPORT_DEBUG_BIT_EXT
+        ;
+      debugUtilsMessengerCI.messageType =
+          VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+      debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
+      VkResult result =
+          gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+      assert(result == VK_SUCCESS);
+    }
+
+    /// 2. Select a Physical Device
+    
+    // Physical device
+    uint32_t gpuCount = 0;
+    // Get number of available physical devices
+    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
+    if (gpuCount == 0) {
+      LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
+    }
+    // Enumerate devices
+    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+    err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
+    if (err) {
+      LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
+    }
+
+    // GPU selection
+
+    auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
+      switch (type) {
+#define STR(r)                                                                                                         \
+  case VK_PHYSICAL_DEVICE_TYPE_##r:                                                                                    \
+    return #r
+        STR(OTHER);
+        STR(INTEGRATED_GPU);
+        STR(DISCRETE_GPU);
+        STR(VIRTUAL_GPU);
+        STR(CPU);
+#undef STR
+      default:
+        return "UNKNOWN_DEVICE_TYPE";
+      }
+    };
+
+    auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
+      return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
+              supportedExtensions.end());
+    };
+
+    /* function that checks if the selected physical device meets requirements
+     */
+    auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
+      uint32_t extensionCount;
+      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+      std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+      std::set<std::string> requiredExtensions;
+      for (auto &cstr : deviceExtensions) {
+        requiredExtensions.insert(std::string(cstr));
+      }
+
+      for (const auto &extension : availableExtensions) {
+        requiredExtensions.erase(extension.extensionName);
+      }
+
+      return requiredExtensions.empty();
+    };
+
+    // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
+    // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
+    // components, without additional requirements.
+    enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
+
+    // Ray tracing related extensions required
+    enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+
+    // Ray tracing related extensions required
+    enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+    // Required by VK_KHR_acceleration_structure
+    enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+    enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
+    // Required for VK_KHR_ray_tracing_pipeline
+    enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+    
+    // required for vulkan memory model stuff
+    enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
+
+    // Required by VK_KHR_spirv_1_4
+    enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+
+    if (requestedFeatures.window) {
+      // If the device will be used for presenting to a display via a swapchain
+      // we need to request the swapchain extension
+      enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    }
+
+    if (requestedFeatures.rayQueries) {
+      // If the device will be using ray queries for inline ray tracing,
+      // we need to explicitly request this.
+      enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+    }
+
+    if (requestedFeatures.invocationReordering) {
+      enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+    }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
+
+    // Select physical device to be used
+    // Defaults to the first device unless specified by command line
+    // uint32_t selectedDevice = -1;   // TODO
+
+    // std::vector<uint32_t> usableDevices;
+    // uint32_t *usableDevices 
+    int numUsableFound = 0;
+    LOG_INFO("Searching for usable Vulkan physical device...");
+    for (uint32_t i = 0; i < gpuCount && numUsableFound < maxUsableToSearchFor; i++) {
+      VkPhysicalDeviceProperties deviceProperties;
+      vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
+      std::string message =
+          std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
+      message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
+      message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
+                 std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
+                 std::to_string(deviceProperties.apiVersion & 0xfff);
+      LOG_INFO(message);
+
+      if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
+        usableDevices[numUsableFound++] = i;
+        // usableDevices.push_back(i);
+        LOG_INFO("\tFound usable device");
+      } else {
+        // Get list of supported extensions
+        uint32_t devExtCount = 0;
+        vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
+        std::vector<VkExtensionProperties> extensions(devExtCount);
+        std::vector<std::string> supportedExtensions;
+        if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
+            VK_SUCCESS) {
+          for (auto ext : extensions) {
+            supportedExtensions.push_back(ext.extensionName);
+          }
+        }
+
+        for (const char *enabledExtension : enabledDeviceExtensions) {
+          if (!extensionSupported(enabledExtension, supportedExtensions)) {
+            LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
+                                                                             << "\" is not present.");
+          }
+        }
+      }
+    }
+    return numUsableFound;
+  }
+  
+
+
+
 GPRT_API void
 gprtRequestWindow(uint32_t initialWidth, uint32_t initialHeight, const char *title) {
   LOG_API_CALL();
@@ -9699,13 +9994,20 @@ gprtDeviceBufferCreate(GPRTContext _context, size_t size, size_t count, const vo
       VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
       // means we can use this buffer as a storage buffer resource
       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-  const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;   // means most efficient for
-                                                                                        // device access
+  const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+  // means most efficient for device access
 
   Context *context = (Context *) _context;
   Buffer *buffer =
-      new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer,
-                 context->graphicsQueue, bufferUsageFlags, memoryUsageFlags, size * count, alignment);
+      new Buffer(context->physicalDevice,
+                 context->logicalDevice,
+                 context->allocator,
+                 context->graphicsCommandBuffer,
+                 context->graphicsQueue,
+                 bufferUsageFlags,
+                 memoryUsageFlags,
+                 size * count,
+                 alignment);
 
   if (init) {
     buffer->map();

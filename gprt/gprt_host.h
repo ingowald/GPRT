@@ -633,6 +633,10 @@ GPRT_API void gprtRequestRayTypeCount(uint32_t numRayTypes);
  Currently defaults to 31. */
 GPRT_API void gprtRequestRayRecursionDepth(uint32_t rayRecursionDepth);
 
+GPRT_API
+int gprtFindSuitableDevices(uint32_t *usableDevices,
+                            int maxUsableToSearchFor);
+
 /*! Requests that ray queries be enabled for inline ray tracing support. */
 GPRT_API void gprtRequestRayQueries();
 
@@ -770,39 +774,55 @@ gprtRayGenDestroy(GPRTRayGenOf<T> rayGen) {
 }
 
 /**
- * @brief Returns a pointer to the parameters section of the record for this ray generation program, made
- * available on the device through the second parameter in GPRT_RAYGEN_PROGRAM. Note, call
- * @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
+ * @brief Returns a pointer to the parameters section of the record
+ * for this ray generation program, made available on the device
+ * through the second parameter in GPRT_RAYGEN_PROGRAM. Note, call
+ * @ref gprtBuildShaderBindingTable for these parameters to be
+ * uploaded to the device.
  *
- * @param rayGen The ray generation program who's record pointer is to be returned.
+ * @param rayGen The ray generation program who's record pointer is to
+ * be returned.
+ *
  * @returns a pointer to the parameters section of the record.
  */
-GPRT_API void *gprtRayGenGetParameters(GPRTRayGen rayGen, int deviceID GPRT_IF_CPP(= 0));
+GPRT_API
+void *gprtRayGenGetParameters(GPRTRayGen rayGen,
+                              int deviceID GPRT_IF_CPP(= 0));
 
 /**
- * @brief Returns a pointer to the parameters section of the record for this ray generation program, made
- * available on the device through the second parameter in GPRT_RAYGEN_PROGRAM. Note, call
- * @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
+ * @brief Returns a pointer to the parameters section of the record
+ * for this ray generation program, made available on the device
+ * through the second parameter in GPRT_RAYGEN_PROGRAM. Note, call
+ * @ref gprtBuildShaderBindingTable for these parameters to be
+ * uploaded to the device.
  *
  * @tparam T The type of the parameters structure stored in the record
- * @param rayGen The ray generation program who's record pointer is to be returned.
+ *
+ * @param rayGen The ray generation program who's record pointer is to
+ * be returned.
+ *
  * @returns a pointer to the parameters section of the record.
  */
 template <typename T>
-T *
-gprtRayGenGetParameters(GPRTRayGenOf<T> rayGen, int deviceID GPRT_IF_CPP(= 0)) {
-  return (T *) gprtRayGenGetParameters((GPRTRayGen) rayGen, deviceID);
-}
+T *gprtRayGenGetParameters(GPRTRayGenOf<T> rayGen,
+                           int deviceID GPRT_IF_CPP(= 0))
+{ return (T *) gprtRayGenGetParameters((GPRTRayGen) rayGen, deviceID); }
 
 /**
- * @brief Copies the contents of the given parameters into the raygen record. Note, call
- * @ref gprtBuildShaderBindingTable for these parameters to be uploaded to the device.
+ * @brief Copies the conteqnts of the given parameters into the raygen
+ * record. Note, call @ref gprtBuildShaderBindingTable for these
+ * parameters to be uploaded to the device.
  *
- * @param rayGen The ray generation program who's record to assign the parameters to.
- * @param parameters A pointer to a parameters structure. Assumed to be "recordSize" bytes,
- * as specified by @ref gprtRayGenCreate.
+ * @param rayGen The ray generation program who's record to assign the
+ * parameters to.
+ *
+ * @param parameters A pointer to a parameters structure. Assumed to
+ * be "recordSize" bytes, as specified by @ref gprtRayGenCreate.
  */
-GPRT_API void gprtRayGenSetParameters(GPRTRayGen rayGen, void *parameters, int deviceID GPRT_IF_CPP(= 0));
+GPRT_API
+void gprtRayGenSetParameters(GPRTRayGen rayGen,
+                             void *parameters,
+                             int deviceID GPRT_IF_CPP(= 0));
 
 /**
  * @brief Copies the contents of the given parameters into the geometry record. Note, call
@@ -1557,26 +1577,44 @@ gprtHostBufferCreate(GPRTContext context, size_t count = 1, const T *init = null
  *                  Larger alignment optimizes access but increase memory usage. Defaults to 16.
  * @return GPRTBuffer Returns a handle to the created buffer that resides in device memory.
  */
-GPRT_API GPRTBuffer gprtDeviceBufferCreate(GPRTContext context, size_t size, size_t count = 1,
-                                           const void *init = nullptr, size_t alignment = 16);
+GPRT_API
+GPRTBuffer gprtDeviceBufferCreate(GPRTContext context,
+                                  size_t size,
+                                  size_t count = 1,
+                                  const void *init = nullptr,
+                                  size_t alignment = 16);
 
 /**
  * @brief Creates a typed buffer using device memory.
  * 
- * This templated function creates a buffer of type T that utilizes memory located on the device (GPU).
- * It allows for the buffer to be easily used with specific data types. Like the non-templated
- * version, this buffer is optimized for high-speed GPU access, making it well-suited for operations
- * where the buffer is primarily accessed and manipulated by the device. Reading from and writing to the 
- * buffer from the host requires mapping, which triggers an underlying buffer copy to and from the host system.
+ * This templated function creates a buffer of type T that utilizes
+ * memory located on the device (GPU).  It allows for the buffer to be
+ * easily used with specific data types. Like the non-templated
+ * version, this buffer is optimized for high-speed GPU access, making
+ * it well-suited for operations where the buffer is primarily
+ * accessed and manipulated by the device. Reading from and writing to
+ * the buffer from the host requires mapping, which triggers an
+ * underlying buffer copy to and from the host system.
  * 
- * @tparam T        The data type of elements in the buffer.
- * @param context   The GPRTContext in which the buffer is to be created.
- * @param count     The number of elements in the buffer. Defaults to 1 (single element).
- * @param init      Optional pointer to initial data for buffer initialization. Defaults to nullptr.
- * @param alignment Byte alignment for the buffer, must be a power of two.
- *                  Larger alignment optimizes access but increase memory usage. Defaults to 16.
- * @return GPRTBufferOf<T> Returns a handle to the created buffer that resides in device memory
- *                         and is typed according to the specified template parameter T.
+ * @tparam T The data type of elements in the buffer.
+ * 
+ * @param context The GPRTContext in which the buffer is to be
+ * created.
+ * 
+ * @param count The number of elements in the buffer. Defaults to 1
+ * (single element).
+ * 
+ * @param init Optional pointer to initial data for buffer
+ * initialization. Defaults to nullptr.
+ * 
+ * @param alignment Byte alignment for the buffer, must be a power of
+ *                  two.  Larger alignment optimizes access but
+ *                  increase memory usage. Defaults to 16.
+ * 
+ * @return GPRTBufferOf<T> Returns a handle to the created buffer that
+ *                         resides in device memory and is typed
+ *                         according to the specified template
+ *                         parameter T.
  */
 template <typename T>
 GPRTBufferOf<T>
@@ -1585,57 +1623,90 @@ gprtDeviceBufferCreate(GPRTContext context, size_t count = 1, const T *init = nu
 }
 
 /**
- * @brief Creates a shared buffer using device memory accessible to all devices.
+ * @brief Creates a shared buffer using device memory accessible to
+ * all devices.
  * 
- * This function creates a buffer in the device memory, accessible by both the host and other 
- * devices. Access from the host might be slower compared to direct device access. The buffer's 
- * size may be influenced by resizable BAR, allowing the CPU to access more of the device's memory.
+ * This function creates a buffer in the device memory, accessible by
+ * both the host and other devices. Access from the host might be
+ * slower compared to direct device access. The buffer's size may be
+ * influenced by resizable BAR, allowing the CPU to access more of the
+ * device's memory.
  * 
- * @note In the PCI configuration space, BARs are used to 
- * hold memory addresses. These memory addresses are used by the CPU to access the memory of the PCI device. 
- * Traditionally, these addresses were of a fixed size, limiting the amount of memory of the device that the 
- * CPU could directly access at any given time (typically to 256MB windows). With "Resizable BAR," this 
- * limitation is overcome by allowing these base address registers to be resized, enabling the CPU to 
- * access more of the device's memory directly.
+ * @note In the PCI configuration space, BARs are used to hold memory
+ * addresses. These memory addresses are used by the CPU to access the
+ * memory of the PCI device.  Traditionally, these addresses were of a
+ * fixed size, limiting the amount of memory of the device that the
+ * CPU could directly access at any given time (typically to 256MB
+ * windows). With "Resizable BAR," this limitation is overcome by
+ * allowing these base address registers to be resized, enabling the
+ * CPU to access more of the device's memory directly.
  * 
- * @param context   The GPRTContext in which the buffer is to be created.
- * @param size      The size of each element in the buffer.
- * @param count     The number of elements in the buffer. Defaults to 1 (single element).
- * @param init      Optional pointer to initial data for buffer initialization. Defaults to nullptr.
- * @param alignment Byte alignment for the buffer, must be a power of two.
- *                  Larger alignment optimizes access but increase memory usage. Defaults to 16.
- * @return GPRTBuffer Returns a handle to the created buffer that uses shared device memory.
+ * @param context The GPRTContext in which the buffer is to be
+ * created.
+ * 
+ * @param size The size of each element in the buffer.
+ * 
+ * @param count The number of elements in the buffer. Defaults to 1
+ * (single element).
+ * 
+ * @param init Optional pointer to initial data for buffer
+ * initialization. Defaults to nullptr.
+ * 
+ * @param alignment Byte alignment for the buffer, must be a power of
+ *                  two.  Larger alignment optimizes access but
+ *                  increase memory usage. Defaults to 16.
+ * 
+ * @return GPRTBuffer Returns a handle to the created buffer that uses
+ * shared device memory.
  */
-GPRT_API GPRTBuffer gprtSharedBufferCreate(GPRTContext context, size_t size, size_t count = 1,
-                                           const void *init = nullptr, size_t alignment = 16);
+GPRT_API
+GPRTBuffer gprtSharedBufferCreate(GPRTContext context,
+                                  size_t size,
+                                  size_t count = 1,
+                                  const void *init = nullptr,
+                                  size_t alignment = 16);
 
 /**
- * @brief Creates a shared, typed buffer using device memory accessible to all devices.
+ * @brief Creates a shared, typed buffer using device memory
+ * accessible to all devices.
  * 
- * This templated function creates a buffer of type T in the device memory, 
- * accessible by both the host and other devices. While the buffer can be accessed 
- * by the host, such access might be slower compared to direct device access. 
- * The buffer's size and efficiency may be influenced by resizable BAR technology, 
- * enabling more direct CPU access to the device's memory.
+ * This templated function creates a buffer of type T in the device
+ * memory, accessible by both the host and other devices. While the
+ * buffer can be accessed by the host, such access might be slower
+ * compared to direct device access.  The buffer's size and efficiency
+ * may be influenced by resizable BAR technology, enabling more direct
+ * CPU access to the device's memory.
  * 
- * @note In the PCI configuration space, BARs are used to 
- * hold memory addresses. These memory addresses are used by the CPU to access the memory of the PCI device. 
- * Traditionally, these addresses were of a fixed size, limiting the amount of memory of the device that the 
- * CPU could directly access at any given time (typically to 256MB windows). With "Resizable BAR," this 
- * limitation is overcome by allowing these base address registers to be resized, enabling the CPU to 
- * access more of the device's memory directly.
+ * @note In the PCI configuration space, BARs are used to hold memory
+ * addresses. These memory addresses are used by the CPU to access the
+ * memory of the PCI device.  Traditionally, these addresses were of a
+ * fixed size, limiting the amount of memory of the device that the
+ * CPU could directly access at any given time (typically to 256MB
+ * windows). With "Resizable BAR," this limitation is overcome by
+ * allowing these base address registers to be resized, enabling the
+ * CPU to access more of the device's memory directly.
  * 
- * @tparam T        The data type of elements in the buffer.
- * @param context   The GPRTContext in which the buffer is to be created.
- * @param count     The number of elements of type T in the buffer. Defaults to 1.
- * @param init      Optional pointer to an array of type T for initializing the buffer. 
- *                  Defaults to nullptr.
- * @param alignment Byte alignment for the buffer, must be a power of two.
- *                  Larger alignment values may optimize device access at the cost of 
- *                  increased memory usage, while smaller values are more memory-efficient 
- *                  but might lead to reduced performance. Defaults to 16.
- * @return GPRTBufferOf<T> Returns a handle to the created buffer using shared device memory,
- *                         and is typed according to the specified template parameter T.
+ * @tparam T The data type of elements in the buffer.
+ * 
+ * @param context The GPRTContext in which the buffer is to be
+ * created.
+ * 
+ * @param count The number of elements of type T in the
+ * buffer. Defaults to 1.
+ * 
+ * @param init Optional pointer to an array of type T for initializing
+ *                  the buffer.  Defaults to nullptr.
+ * 
+ * @param alignment Byte alignment for the buffer, must be a power of
+ *                  two.  Larger alignment values may optimize device
+ *                  access at the cost of increased memory usage,
+ *                  while smaller values are more memory-efficient but
+ *                  might lead to reduced performance. Defaults to 16.
+ * 
+ * @return GPRTBufferOf<T> Returns a handle to the created buffer
+ *                         using shared device memory, and is typed
+ *                         according to the specified template
+ *                         parameter T.
  */
 template <typename T>
 GPRTBufferOf<T>
@@ -1779,28 +1850,54 @@ gprtBufferResize(GPRTContext context, GPRTBufferOf<T> buffer, size_t count, bool
  * @param size The size of an individual element in the buffer
  * @param count The total number of elements to copy
  */
-GPRT_API void gprtBufferCopy(GPRTContext context, GPRTBuffer src, GPRTBuffer dst, size_t srcOffset, size_t dstOffset,
-                             size_t size, size_t count, int srcDeviceID GPRT_IF_CPP(= 0),
-                             int dstDeviceID GPRT_IF_CPP(= 0));
+GPRT_API
+void gprtBufferCopy(GPRTContext context,
+                    GPRTBuffer src,
+                    GPRTBuffer dst,
+                    size_t srcOffset,
+                    size_t dstOffset,
+                    size_t size,
+                    size_t count,
+                    int srcDeviceID GPRT_IF_CPP(= 0),
+                    int dstDeviceID GPRT_IF_CPP(= 0));
 
 /***
- * @brief Copies the \p count elements of each \p size bytes from \p src into \p dst , reading from \p srcOffset and
- * writing to \p dstOffset .
+ * @brief Copies the \p count elements of each \p size bytes from \p
+ * src into \p dst , reading from \p srcOffset and writing to \p
+ * dstOffset .
  *
  * @tparam T The template type of the given buffer
  *
  * @param context The GPRT context
+ *
  * @param src The source buffer to copy elements from
+ *
  * @param dst The destination buffer to copy elements into
+ *
  * @param srcOffset The first element location to copy from
+ *
  * @param dstOffset The first element location to copy into
+ *
  * @param count The total number of elements to copy
  */
 template <typename T>
-void
-gprtBufferCopy(GPRTContext context, GPRTBufferOf<T> src, GPRTBufferOf<T> dst, uint32_t srcOffset, uint32_t dstOffset,
-               uint32_t count, int srcDeviceID GPRT_IF_CPP(= 0), int dstDeviceID GPRT_IF_CPP(= 0)) {
-  gprtBufferCopy(context, (GPRTBuffer) src, (GPRTBuffer) dst, srcOffset, dstOffset, sizeof(T), count, srcDeviceID,
+void gprtBufferCopy(GPRTContext context,
+                    GPRTBufferOf<T> src,
+                    GPRTBufferOf<T> dst,
+                    uint32_t srcOffset,
+                    uint32_t dstOffset,
+                    uint32_t count,
+                    int srcDeviceID GPRT_IF_CPP(= 0),
+                    int dstDeviceID GPRT_IF_CPP(= 0))
+{
+  gprtBufferCopy(context,
+                 (GPRTBuffer) src,
+                 (GPRTBuffer) dst,
+                 srcOffset,
+                 dstOffset,
+                 sizeof(T),
+                 count,
+                 srcDeviceID,
                  dstDeviceID);
 }
 
