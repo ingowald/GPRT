@@ -312,23 +312,23 @@ struct NNTriangleGeom;
 struct NNTriangleGeomType;
 
 namespace gprt {
-  PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddress;
-  PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructure;
-  PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructure;
-  PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizes;
-  PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddress;
-  PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructures;
-  PFN_vkCmdCopyAccelerationStructureKHR vkCmdCopyAccelerationStructure;
-  PFN_vkBuildAccelerationStructuresKHR vkBuildAccelerationStructures;
-  PFN_vkCopyAccelerationStructureKHR vkCopyAccelerationStructure;
-  PFN_vkCmdTraceRaysKHR vkCmdTraceRays;
-  PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandles;
-  PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelines;
-  PFN_vkCmdWriteAccelerationStructuresPropertiesKHR vkCmdWriteAccelerationStructuresProperties;
+  PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddress = 0;
+  PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructure = 0;
+  PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructure = 0;
+  PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizes = 0;
+  PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddress = 0;
+  PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructures = 0;
+  PFN_vkCmdCopyAccelerationStructureKHR vkCmdCopyAccelerationStructure = 0;
+  PFN_vkBuildAccelerationStructuresKHR vkBuildAccelerationStructures = 0;
+  PFN_vkCopyAccelerationStructureKHR vkCopyAccelerationStructure = 0;
+  PFN_vkCmdTraceRaysKHR vkCmdTraceRays = 0;
+  PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandles = 0;
+  PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelines = 0;
+  PFN_vkCmdWriteAccelerationStructuresPropertiesKHR vkCmdWriteAccelerationStructuresProperties = 0;
 
-  PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
-  PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
-  VkDebugUtilsMessengerEXT debugUtilsMessenger;
+  PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = 0;
+  PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT = 0;
+  VkDebugUtilsMessengerEXT debugUtilsMessenger = 0;
 
   // Note, the following were deprecated and shouldn't be used
   // PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
@@ -428,11 +428,11 @@ struct Module {
 struct Buffer {
   static std::vector<Buffer *> buffers;
 
-  VkDevice device;
-  VmaAllocator allocator;
+  VkDevice device = 0;
+  VmaAllocator allocator = 0;
   VkPhysicalDeviceMemoryProperties memoryProperties;
-  VkCommandBuffer commandBuffer;
-  VkQueue queue;
+  VkCommandBuffer commandBuffer = 0;
+  VkQueue queue = 0;
 
   /** @brief Usage flags to be filled by external source at buffer creation */
   VkBufferUsageFlags usageFlags;
@@ -575,13 +575,7 @@ struct Buffer {
     vmaInvalidateAllocation(allocator, allocation, 0, VK_WHOLE_SIZE);
   }
 
-  VkDeviceAddress getDeviceAddress() {
-    VkBufferDeviceAddressInfoKHR info = {};
-    info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
-    info.buffer = buffer;
-    VkDeviceAddress addr = gprt::vkGetBufferDeviceAddress(device, &info);
-    return addr;
-  }
+  VkDeviceAddress getDeviceAddress();
 
   /*! Calls vkDestroy on the buffer, and frees underlying memory */
   void destroy() {
@@ -849,96 +843,118 @@ struct Buffer {
   Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAllocator _allocator,
          VkCommandBuffer _commandBuffer, VkQueue _queue, VkBufferUsageFlags _usageFlags,
          VkMemoryPropertyFlags _memoryPropertyFlags, VkDeviceSize _size, VkDeviceSize _alignment,
-         void *data = nullptr) {
+         void *data = nullptr);
+};
 
-    // Hunt for an existing free virtual address for this buffer
-    for (uint32_t i = 0; i < Buffer::buffers.size(); ++i) {
-      if (Buffer::buffers[i] == nullptr) {
-        Buffer::buffers[i] = this;
-        virtualAddress = i;
-        break;
-      }
+
+VkDeviceAddress Buffer::getDeviceAddress()
+{
+  VkBufferDeviceAddressInfoKHR info = {};
+  info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
+  info.buffer = buffer;
+  PING; PRINT(device); PRINT(&info);
+  VkDeviceAddress addr = gprt::vkGetBufferDeviceAddress(device, &info);
+  PING; PRINT((int*)addr);
+  return addr;
+}
+
+Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAllocator _allocator,
+               VkCommandBuffer _commandBuffer, VkQueue _queue, VkBufferUsageFlags _usageFlags,
+               VkMemoryPropertyFlags _memoryPropertyFlags, VkDeviceSize _size, VkDeviceSize _alignment,
+               void *data)
+{
+  PING;
+
+  // Hunt for an existing free virtual address for this buffer
+  for (uint32_t i = 0; i < Buffer::buffers.size(); ++i) {
+    if (Buffer::buffers[i] == nullptr) {
+      Buffer::buffers[i] = this;
+      virtualAddress = i;
+      break;
     }
-    // If we cant find a free spot in the current buffer list, allocate a new
-    // one
-    if (virtualAddress == -1) {
-      Buffer::buffers.push_back(this);
-      virtualAddress = (uint32_t)buffers.size() - 1;
-    }
+  }
+  // If we cant find a free spot in the current buffer list, allocate a new
+  // one
+  if (virtualAddress == -1) {
+    Buffer::buffers.push_back(this);
+    virtualAddress = (uint32_t)buffers.size() - 1;
+  }
 
-    // For performance reasons, round the size up for vectorized/multiword reads
-    uint32_t multiwordSize = 16;
-    _size = (_size + (multiwordSize - 1) / multiwordSize);
+  // For performance reasons, round the size up for vectorized/multiword reads
+  uint32_t multiwordSize = 16;
+  _size = (_size + (multiwordSize - 1) / multiwordSize);
 
-    device = logicalDevice;
-    allocator = _allocator;
-    usageFlags = _usageFlags;
-    size = _size;
-    alignment = _alignment;
-    commandBuffer = _commandBuffer;
-    queue = _queue;
+  device = logicalDevice;
+  allocator = _allocator;
+  usageFlags = _usageFlags;
+  size = _size;
+  alignment = _alignment;
+  commandBuffer = _commandBuffer;
+  queue = _queue;
 
-    // Check if the buffer can be mapped to a host pointer.
-    // If the buffer isn't host visible, this is buffer and requires
-    // an additional staging buffer...
-    if ((_memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0)
-      hostVisible = true;
-    else
-      hostVisible = false;
+  // Check if the buffer can be mapped to a host pointer.
+  // If the buffer isn't host visible, this is buffer and requires
+  // an additional staging buffer...
+  if ((_memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) != 0)
+    hostVisible = true;
+  else
+    hostVisible = false;
 
-    // Create the buffer handle
+  // Create the buffer handle
+  VkBufferCreateInfo bufferCreateInfo{};
+  bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+  bufferCreateInfo.usage = usageFlags;
+  bufferCreateInfo.size = size;
+
+  VmaAllocationCreateInfo allocInfo = {};
+  if (hostVisible) {
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
+  } else {
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+  }
+  PING;
+  VK_CHECK_RESULT(vmaCreateBufferWithAlignment(allocator, &bufferCreateInfo, &allocInfo, alignment, &buffer,
+                                               &allocation, nullptr));
+
+  // VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &buffer));
+
+  if (!hostVisible) {
+    const VkBufferUsageFlags bufferUsageFlags =
+      // means we can use this buffer to transfer into another
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+      // means we can use this buffer to receive data transferred from
+      // another
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+
     VkBufferCreateInfo bufferCreateInfo{};
     bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    bufferCreateInfo.usage = usageFlags;
+    bufferCreateInfo.usage = bufferUsageFlags;
     bufferCreateInfo.size = size;
+    // VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &stagingBuffer.buffer));
 
     VmaAllocationCreateInfo allocInfo = {};
-    if (hostVisible) {
-      allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-      allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
-    } else {
-      allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-    }
-
-    VK_CHECK_RESULT(vmaCreateBufferWithAlignment(allocator, &bufferCreateInfo, &allocInfo, alignment, &buffer,
-                                                 &allocation, nullptr));
-
-    // VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &buffer));
-
-    if (!hostVisible) {
-      const VkBufferUsageFlags bufferUsageFlags =
-        // means we can use this buffer to transfer into another
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-        // means we can use this buffer to receive data transferred from
-        // another
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT;
-
-      VkBufferCreateInfo bufferCreateInfo{};
-      bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-      bufferCreateInfo.usage = bufferUsageFlags;
-      bufferCreateInfo.size = size;
-      // VK_CHECK_RESULT(vkCreateBuffer(logicalDevice, &bufferCreateInfo, nullptr, &stagingBuffer.buffer));
-
-      VmaAllocationCreateInfo allocInfo = {};
-      allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
-      allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
-      VK_CHECK_RESULT(vmaCreateBufferWithAlignment(allocator, &bufferCreateInfo, &allocInfo, alignment,
-                                                   &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
-    }
-
-    // If a pointer to the buffer data has been passed, map the buffer and
-    // copy over the data
-    if (data != nullptr) {
-      map();
-      memcpy(mapped, data, size);
-      unmap();
-    }
-
-    // means we can get this buffer's address with vkGetBufferDeviceAddress
-    if ((usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0)
-      deviceAddress = getDeviceAddress();
+    allocInfo.usage = VMA_MEMORY_USAGE_AUTO;
+    allocInfo.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT;
+    VK_CHECK_RESULT(vmaCreateBufferWithAlignment(allocator, &bufferCreateInfo, &allocInfo, alignment,
+                                                 &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
   }
-};
+
+  PING;
+  // If a pointer to the buffer data has been passed, map the buffer and
+  // copy over the data
+  if (data != nullptr) {
+    map();
+    memcpy(mapped, data, size);
+    unmap();
+  }
+
+  PING;
+  // means we can get this buffer's address with vkGetBufferDeviceAddress
+  if ((usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0)
+    deviceAddress = getDeviceAddress();
+  PING;
+}
 
 std::vector<Buffer *> Buffer::buffers;
 
@@ -2836,15 +2852,20 @@ struct AABBGeomType : public GeomType {
 
 struct Accel;
 
+VkInstance globalInstance;
+    std::vector<std::string> supportedInstanceExtensions;
+    std::vector<const char *> enabledDeviceExtensions;
+    std::vector<const char *> enabledInstanceExtensions;
+
 
   std::vector<VkPhysicalDevice> getUsableDevices()
   {
+    PING;
     static std::vector<VkPhysicalDevice> usableDevices;
     static bool alreadyQueried = false;
     if (alreadyQueried) return usableDevices;
     alreadyQueried = true;
   
-    static VkInstance instance;
     static VkApplicationInfo appInfo;
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = "GPRT";
@@ -2863,9 +2884,6 @@ struct Accel;
 
     // Get extensions supported by the instance and store for later use
     uint32_t instExtCount = 0;
-    std::vector<std::string> supportedInstanceExtensions;
-    std::vector<const char *> enabledDeviceExtensions;
-    std::vector<const char *> enabledInstanceExtensions;
     vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
     if (instExtCount > 0) {
       std::vector<VkExtensionProperties> extensions(instExtCount);
@@ -2929,17 +2947,19 @@ struct Accel;
 
     VkResult err;
 
-    err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+    err = vkCreateInstance(&instanceCreateInfo, nullptr, &globalInstance);
     if (err) {
       LOG_ERROR("failed to create instance! : \n" + errorString(err));
     }
 
     // Setup debug printf callback
     if (requestedFeatures.debugPrintf) {
-      gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-                                                                                                  vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
-      gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-                                                                                                    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+      gprt::vkCreateDebugUtilsMessengerEXT
+        = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>
+        (vkGetInstanceProcAddr(globalInstance, "vkCreateDebugUtilsMessengerEXT"));
+      gprt::vkDestroyDebugUtilsMessengerEXT
+        = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>
+        (vkGetInstanceProcAddr(globalInstance, "vkDestroyDebugUtilsMessengerEXT"));
 
       VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
       debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -2954,7 +2974,7 @@ struct Accel;
         VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
       debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
       VkResult result =
-        gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+        gprt::vkCreateDebugUtilsMessengerEXT(globalInstance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
       assert(result == VK_SUCCESS);
     }
 
@@ -2963,13 +2983,13 @@ struct Accel;
     // Physical device
     uint32_t gpuCount = 0;
     // Get number of available physical devices
-    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
+    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(globalInstance, &gpuCount, nullptr));
     if (gpuCount == 0) {
       LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
     }
     // Enumerate devices
     std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
-    err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
+    err = vkEnumeratePhysicalDevices(globalInstance, &gpuCount, physicalDevices.data());
     if (err) {
       LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
     }
@@ -3072,7 +3092,7 @@ struct Accel;
 
     // std::vector<uint32_t> usableDevices;
     // uint32_t *usableDevices 
-    int numUsableFound = 0;
+    // int numUsableFound = 0;
     LOG_INFO("Searching for usable Vulkan physical device...");
     for (uint32_t i = 0; i < gpuCount; i++) {
       VkPhysicalDeviceProperties deviceProperties;
@@ -3087,6 +3107,7 @@ struct Accel;
 
       if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
         // usableDevices[numUsableFound++] = i;
+        std::cout << "##### found usable device: " << i << ", physical " << physicalDevices[i] << std::endl;
         usableDevices.push_back(physicalDevices[i]);
         // usableDevices.push_back(i);
         LOG_INFO("\tFound usable device");
@@ -3111,6 +3132,7 @@ struct Accel;
         //   }
       }
     }
+    PING; PRINT(usableDevices.size());
     return usableDevices;
   }
 
@@ -3119,11 +3141,11 @@ struct Context {
   // For convenience, an opaque handle to the context
   GPRTContext context = (GPRTContext)this;
 
-  VkApplicationInfo appInfo;
+  // VkApplicationInfo appInfo;
 
   // Vulkan instance, stores all per-application states
-  VkInstance instance;
-  std::vector<std::string> supportedInstanceExtensions;
+  // static VkInstance instance;
+  // std::vector<std::string> supportedInstanceExtensions;
 
   // optional windowing features
   VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -3188,8 +3210,8 @@ struct Context {
 
   /** @brief Set of device extensions to be enabled for this example (must be
    * set in the derived constructor) */
-  std::vector<const char *> enabledDeviceExtensions;
-  std::vector<const char *> enabledInstanceExtensions;
+  // std::vector<const char *> enabledDeviceExtensions;
+  // std::vector<const char *> enabledInstanceExtensions;
   /** @brief Optional pNext structure for passing extension structures to device
    * creation */
   void *deviceCreatepNextChain = nullptr;
@@ -3333,7 +3355,7 @@ struct Context {
 
   void freeDebugCallback(VkInstance instance) {
     if (gprt::debugUtilsMessenger != VK_NULL_HANDLE) {
-      gprt::vkDestroyDebugUtilsMessengerEXT(instance, gprt::debugUtilsMessenger, nullptr);
+      gprt::vkDestroyDebugUtilsMessengerEXT(globalInstance, gprt::debugUtilsMessenger, nullptr);
     }
   }
 
@@ -3544,8 +3566,9 @@ struct Context {
     deviceCreateInfo.pNext = &deviceFeatures2;
 
     // If a pNext(Chain) has been passed, we need to add it to the device
-    // creation info VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{}; if
-    // (pNextChain) {
+    // creation info
+    // VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
+    // if (pNextChain) {
     //   physicalDeviceFeatures2.sType =
     //   VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
     //   physicalDeviceFeatures2.features = enabledFeatures;
@@ -3554,9 +3577,9 @@ struct Context {
     //   deviceCreateInfo.pNext = &physicalDeviceFeatures2;
     // }
 
-    // // Enable the debug marker extension if it is present (likely meaning a
-    // debugging tool is present) if
-    // (extensionSupported(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
+    // Enable the debug marker extension if it is present (likely meaning a
+    // debugging tool is present)
+    // if (extensionSupported(VK_EXT_DEBUG_MARKER_EXTENSION_NAME))
     // {
     //   enabledDeviceExtensions.push_back(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
     //   enableDebugMarkers = true;
@@ -3584,7 +3607,7 @@ struct Context {
     allocatorCreateInfo.vulkanApiVersion = VK_API_VERSION_1_2;
     allocatorCreateInfo.physicalDevice = physicalDevice;
     allocatorCreateInfo.device = logicalDevice;
-    allocatorCreateInfo.instance = instance;
+    allocatorCreateInfo.instance = globalInstance;
     allocatorCreateInfo.pVulkanFunctions = &vulkanFunctions;
     allocatorCreateInfo.flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
     err = vmaCreateAllocator(&allocatorCreateInfo, &allocator);
@@ -3594,8 +3617,11 @@ struct Context {
 
     // Get the ray tracing and acceleration structure related function pointers
     // required by this sample
-    gprt::vkGetBufferDeviceAddress = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>(
-                                                                                       vkGetDeviceProcAddr(logicalDevice, "vkGetBufferDeviceAddressKHR"));
+    gprt::vkGetBufferDeviceAddress
+      = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>
+      (vkGetDeviceProcAddr(logicalDevice, "vkGetBufferDeviceAddressKHR"));
+    PING; PRINT(gprt::vkGetBufferDeviceAddress);
+    
     gprt::vkCmdBuildAccelerationStructures = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(
                                                                                                        vkGetDeviceProcAddr(logicalDevice, "vkCmdBuildAccelerationStructuresKHR"));
     gprt::vkCmdCopyAccelerationStructure = reinterpret_cast<PFN_vkCmdCopyAccelerationStructureKHR>(
@@ -3691,9 +3717,12 @@ struct Context {
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.compute, 0, &computeQueue);
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.transfer, 0, &transferQueue);
 
+    PING;
     // 7. Create a module for internal device entry points
     radixSortModule = new Module(sortDeviceCode);
+    PING;
     scanModule = new Module(scanDeviceCode);
+    PING;
     
     // // Swapchain semaphores and fences
     // if (requestedFeatures.window) {
@@ -3827,6 +3856,7 @@ struct Context {
     // }
 
     // For texture / sampler arrays, we need some defaults
+    PING;
     {
       const VkImageUsageFlags imageUsageFlags =
         // means we can make an image view required to assign this image to a
@@ -3853,6 +3883,7 @@ struct Context {
         new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
                     memoryUsageFlags, VK_IMAGE_TYPE_3D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
 
+      PING;
       const VkBufferUsageFlags bufferUsageFlags =
         // means we can get this buffer's address with vkGetBufferDeviceAddress
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -3862,11 +3893,20 @@ struct Context {
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
         // means we can use this buffer as a storage buffer resource
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+      PING;
+      PRINT((int*)physicalDevice);
+      PRINT((int*)logicalDevice);
+      PRINT((int*)graphicsCommandBuffer);
+      PRINT((int*)graphicsQueue);
+      PRINT((int*)allocator);
+      
       defaultBuffer = new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue,
                                  bufferUsageFlags, memoryUsageFlags, 1, 16);
+      PING;
     }
 
     // For the SBT record descriptor for raster shaders
+    PING;
     {
       VkDescriptorSetLayoutBinding binding{};
       binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -3888,6 +3928,7 @@ struct Context {
       poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
       poolSize.descriptorCount = 1;
 
+    PING;
       VkDescriptorPoolCreateInfo descriptorPoolInfo{};
       descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
       descriptorPoolInfo.poolSizeCount = 1;
@@ -3906,6 +3947,7 @@ struct Context {
       VK_CHECK_RESULT(vkAllocateDescriptorSets(logicalDevice, &descriptorSetAllocateInfo, &rasterRecordDescriptorSet));
     }
 
+    PING;
     // For the SBT record descriptor for compute shaders
     {
       VkDescriptorSetLayoutBinding binding{};
@@ -3947,6 +3989,7 @@ struct Context {
       VK_CHECK_RESULT(vkAllocateDescriptorSets(logicalDevice, &descriptorSetAllocateInfo, &computeRecordDescriptorSet));
     }
 
+    PING;
     // // Init imgui
     // if (requestedFeatures.window) {
     // PING;
@@ -3987,8 +4030,11 @@ struct Context {
 
     // Finally, setup the internal shader stages and build an initial shader binding table
     setupInternalPrograms();
+    PING;
     buildPipeline();
+    PING;
     buildSBT(GPRT_SBT_ALL);
+    PING;
   };
 
   void destroy() {
@@ -4147,7 +4193,7 @@ struct Context {
     //   window = nullptr;
     // }
     if (surface) {
-      vkDestroySurfaceKHR(instance, surface, nullptr);
+      vkDestroySurfaceKHR(globalInstance, surface, nullptr);
       surface = nullptr;
     }
 
@@ -4263,8 +4309,8 @@ struct Context {
     vkDestroyDevice(logicalDevice, nullptr);
 
     if (requestedFeatures.debugPrintf)
-      freeDebugCallback(instance);
-    vkDestroyInstance(instance, nullptr);
+      freeDebugCallback(globalInstance);
+    vkDestroyInstance(globalInstance, nullptr);
   }
 
   ~Context(){};
@@ -8541,9 +8587,9 @@ int gprtDeviceCount()
 //     // Setup debug printf callback
 //     if (requestedFeatures.debugPrintf) {
 //       gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-//           vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+//           vkGetInstanceProcAddr(globalInstance, "vkCreateDebugUtilsMessengerEXT"));
 //       gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-//           vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+//           vkGetInstanceProcAddr(globalInstance, "vkDestroyDebugUtilsMessengerEXT"));
 
 //       VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
 //       debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
@@ -8558,7 +8604,7 @@ int gprtDeviceCount()
 //           VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
 //       debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
 //       VkResult result =
-//           gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+//           gprt::vkCreateDebugUtilsMessengerEXT(globalInstance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
 //       assert(result == VK_SUCCESS);
 //     }
 
@@ -8567,13 +8613,13 @@ int gprtDeviceCount()
 //     // Physical device
 //     uint32_t gpuCount = 0;
 //     // Get number of available physical devices
-//     VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
+//     VK_CHECK_RESULT(vkEnumeratePhysicalDevices(globalInstance, &gpuCount, nullptr));
 //     if (gpuCount == 0) {
 //       LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
 //     }
 //     // Enumerate devices
 //     std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
-//     err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
+//     err = vkEnumeratePhysicalDevices(globalInstance, &gpuCount, physicalDevices.data());
 //     if (err) {
 //       LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
 //     }
