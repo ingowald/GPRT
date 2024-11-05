@@ -634,7 +634,7 @@ GPRT_API void gprtRequestRayTypeCount(uint32_t numRayTypes);
 GPRT_API void gprtRequestRayRecursionDepth(uint32_t rayRecursionDepth);
 
 GPRT_API
-int gprtFindSuitableDevices(uint32_t *usableDevices,
+int gprtFindSuitableDevices(int *usableDevices,
                             int maxUsableToSearchFor);
 
 /*! Requests that ray queries be enabled for inline ray tracing support. */
@@ -1579,8 +1579,8 @@ gprtHostBufferCreate(GPRTContext context, size_t count = 1, const T *init = null
  */
 GPRT_API
 GPRTBuffer gprtDeviceBufferCreate(GPRTContext context,
-                                  size_t size,
-                                  size_t count = 1,
+                                  size_t elementSize,
+                                  size_t elementCount = 1,
                                   const void *init = nullptr,
                                   size_t alignment = 16);
 
@@ -1617,9 +1617,14 @@ GPRTBuffer gprtDeviceBufferCreate(GPRTContext context,
  *                         parameter T.
  */
 template <typename T>
-GPRTBufferOf<T>
-gprtDeviceBufferCreate(GPRTContext context, size_t count = 1, const T *init = nullptr, size_t alignment = 16) {
-  return (GPRTBufferOf<T>) gprtDeviceBufferCreate(context, sizeof(T), count, init, alignment);
+GPRTBufferOf<T> gprtDeviceBufferCreate(GPRTContext context,
+                                       size_t elementCount = 1,
+                                       const T *init = nullptr,
+                                       size_t alignment = 16)
+{
+  return (GPRTBufferOf<T>)
+    gprtDeviceBufferCreate(context, sizeof(T),
+                           elementCount, init, alignment);
 }
 
 /**

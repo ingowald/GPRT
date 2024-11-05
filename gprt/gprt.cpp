@@ -54,8 +54,17 @@
 #endif
 #endif
 
+#ifndef PRINT
+# define PRINT(var) std::cout << #var << "=" << var << std::endl;
+#ifdef __WIN32__
+# define PING std::cout << __FILE__ << "::" << __LINE__ << ": " << __FUNCTION__ << std::endl;
+#else
+# define PING std::cout << __FILE__ << "::" << __LINE__ << ": " << __PRETTY_FUNCTION__ << std::endl;
+#endif
+#endif
+
 // library for windowing
-#include <GLFW/glfw3.h>
+// #include <GLFW/glfw3.h>
 
 // For SPIRV reflection
 #include "spirv_reflect.h"
@@ -66,9 +75,9 @@
 #include "stb/stb_image_write.h"
 
 // For user interface
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
+// #include "imgui.h"
+// #include "imgui_impl_glfw.h"
+// #include "imgui_impl_vulkan.h"
 
 // For advanced vulkan memory allocation
 #define VMA_VULKAN_VERSION 1002000   // Vulkan 1.2
@@ -1910,7 +1919,8 @@ struct Compute : public SBTEntry {
                      VkDescriptorSetLayout texture1DDescriptorSetLayout,
                      VkDescriptorSetLayout texture2DDescriptorSetLayout,
                      VkDescriptorSetLayout texture3DDescriptorSetLayout,
-                     VkDescriptorSetLayout bufferDescriptorSetLayout) {
+                     VkDescriptorSetLayout bufferDescriptorSetLayout)
+  {
     // If we already have a pipeline layout, free it so that we can make a new one
     if (pipelineLayout) {
       vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
@@ -2838,27 +2848,27 @@ struct Context {
 
   // optional windowing features
   VkSurfaceKHR surface = VK_NULL_HANDLE;
-  GLFWwindow *window = nullptr;
+  // GLFWwindow *window = nullptr;
   VkExtent2D windowExtent;
   VkPresentModeKHR presentMode;
   VkSurfaceFormatKHR surfaceFormat;
   VkSurfaceCapabilitiesKHR surfaceCapabilities;
   uint32_t surfaceImageCount;
-  VkSwapchainKHR swapchain = VK_NULL_HANDLE;
-  std::vector<VkImage> swapchainImages;
+  // VkSwapchainKHR swapchain = VK_NULL_HANDLE;
+  // std::vector<VkImage> swapchainImages;
   uint32_t currentImageIndex;
   VkSemaphore imageAvailableSemaphore = VK_NULL_HANDLE;
   VkSemaphore renderFinishedSemaphore = VK_NULL_HANDLE;
   VkFence inFlightFence = VK_NULL_HANDLE;
 
-  struct ImGuiData {
-    uint32_t width = -1;
-    uint32_t height = -1;
-    VkRenderPass renderPass = VK_NULL_HANDLE;
-    VkFramebuffer frameBuffer = VK_NULL_HANDLE;
-    Texture *colorAttachment = nullptr;
-    Texture *depthAttachment = nullptr;
-  } imgui;
+  // struct ImGuiData {
+  //   uint32_t width = -1;
+  //   uint32_t height = -1;
+  //   VkRenderPass renderPass = VK_NULL_HANDLE;
+  //   VkFramebuffer frameBuffer = VK_NULL_HANDLE;
+  //   Texture *colorAttachment = nullptr;
+  //   Texture *depthAttachment = nullptr;
+  // } imgui;
 
   // Physical device (GPU) that Vulkan will use
   VkPhysicalDevice physicalDevice;
@@ -2970,7 +2980,7 @@ struct Context {
   VkDescriptorPool rasterRecordDescriptorPool = VK_NULL_HANDLE;
   VkDescriptorPool computeRecordDescriptorPool = VK_NULL_HANDLE;
 
-  VkDescriptorPool imguiPool = VK_NULL_HANDLE;
+  // VkDescriptorPool imguiPool = VK_NULL_HANDLE;
 
   // used to determine what descriptor sets need rebuilding
   uint32_t previousNumSamplers = 0;
@@ -3111,22 +3121,23 @@ struct Context {
     }
 
 
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions;
-    if (requestedFeatures.window) {
-      if (!glfwInit()) {
-        LOG_WARNING("Unable to create window. Falling back to headless mode.");
-        requestedFeatures.window = false;
-      } else {
-        if (!glfwVulkanSupported()) {
-          LOG_ERROR("Window requested but unsupported!");
-        }
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
-          instanceExtensions.push_back(glfwExtensions[i]);
-        }
-      }
-    }
+    // PING;
+    // uint32_t glfwExtensionCount = 0;
+    // const char **glfwExtensions;
+    // if (requestedFeatures.window) {
+    //   if (!glfwInit()) {
+    //     LOG_WARNING("Unable to create window. Falling back to headless mode.");
+    //     requestedFeatures.window = false;
+    //   } else {
+    //     if (!glfwVulkanSupported()) {
+    //       LOG_ERROR("Window requested but unsupported!");
+    //     }
+    //     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    //     for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
+    //       instanceExtensions.push_back(glfwExtensions[i]);
+    //     }
+    //   }
+    // }
 
 #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
     instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
@@ -3155,22 +3166,23 @@ struct Context {
       LOG_ERROR("failed to create instance! : \n" + errorString(err));
     }
 
-    /// 1.5 - create a window and surface if requested
-    if (requestedFeatures.window) {
-      glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-      // todo, allow the window to resize and recreate swapchain
-      glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-      window = glfwCreateWindow(requestedFeatures.windowProperties.initialWidth,
-                                requestedFeatures.windowProperties.initialHeight,
-                                requestedFeatures.windowProperties.title.c_str(), NULL, NULL);
+    // /// 1.5 - create a window and surface if requested
+    // if (requestedFeatures.window) {
+    // PING;
+    //   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    //   // todo, allow the window to resize and recreate swapchain
+    //   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    //   window = glfwCreateWindow(requestedFeatures.windowProperties.initialWidth,
+    //                             requestedFeatures.windowProperties.initialHeight,
+    //                             requestedFeatures.windowProperties.title.c_str(), NULL, NULL);
 
-      VkResult err = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-      if (err != VK_SUCCESS) {
-        LOG_ERROR("failed to create window surface! : \n" + errorString(err));
-      }
-      // Poll some initial event values
-      glfwPollEvents();
-    }
+    //   VkResult err = glfwCreateWindowSurface(instance, window, nullptr, &surface);
+    //   if (err != VK_SUCCESS) {
+    //     LOG_ERROR("failed to create window surface! : \n" + errorString(err));
+    //   }
+    //   // Poll some initial event values
+    //   glfwPollEvents();
+    // }
 
     // Setup debug printf callback
     if (requestedFeatures.debugPrintf) {
@@ -3284,11 +3296,11 @@ struct Context {
     // Required by VK_KHR_spirv_1_4
     enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 
-    if (requestedFeatures.window) {
-      // If the device will be used for presenting to a display via a swapchain
-      // we need to request the swapchain extension
-      enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    }
+    // if (requestedFeatures.window) {
+    //   // If the device will be used for presenting to a display via a swapchain
+    //   // we need to request the swapchain extension
+    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    // }
 
     if (requestedFeatures.rayQueries) {
       // If the device will be using ray queries for inline ray tracing,
@@ -3308,6 +3320,7 @@ struct Context {
     // Defaults to the first device unless specified by command line
     uint32_t selectedDevice = -1;   // TODO
 
+    PING;
     std::vector<uint32_t> usableDevices;
 
     LOG_INFO("Searching for usable Vulkan physical device...");
@@ -3577,6 +3590,7 @@ struct Context {
     if (err) {
       LOG_ERROR("Could not create logical devices : \n" + errorString(err));
     }
+    std::cout << "created logical device " << logicalDevice << std::endl;
 
     // Create vulkan memory allocator
     VmaVulkanFunctions vulkanFunctions = {};
@@ -3698,135 +3712,136 @@ struct Context {
     radixSortModule = new Module(sortDeviceCode);
     scanModule = new Module(scanDeviceCode);
     
-    // Swapchain semaphores and fences
-    if (requestedFeatures.window) {
-      VkSemaphoreCreateInfo semaphoreInfo{};
-      semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    // // Swapchain semaphores and fences
+    // if (requestedFeatures.window) {
+    //   VkSemaphoreCreateInfo semaphoreInfo{};
+    //   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-      VkFenceCreateInfo fenceInfo{};
-      fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    //   VkFenceCreateInfo fenceInfo{};
+    //   fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 
-      if (vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
-          vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
-          vkCreateFence(logicalDevice, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) {
-        LOG_ERROR("Failed to create swapchain semaphores");
-      }
-    }
+    //   if (vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
+    //       vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
+    //       vkCreateFence(logicalDevice, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS) {
+    //     LOG_ERROR("Failed to create swapchain semaphores");
+    //   }
+    // }
 
-    // Swapchain setup
-    if (requestedFeatures.window) {
-      VkSurfaceCapabilitiesKHR surfaceCapabilities;
-      vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+    // // Swapchain setup
+    // if (requestedFeatures.window) {
+    //   PING;
+    //   VkSurfaceCapabilitiesKHR surfaceCapabilities;
+    //   vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
 
-      // SRGB is a commonly supported surface format. It's also efficient to
-      // write to, so we assume this format.
-      // Note, we don't use RGBA since NVIDIA doesn't support this...
-      surfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
-      surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
-      bool surfaceFormatFound = false;
-      std::vector<VkSurfaceFormatKHR> formats;
-      uint32_t formatCount;
-      vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
-      if (formatCount != 0) {
-        formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data());
-      }
-      for (uint32_t i = 0; i < formatCount; ++i)
-        if (formats[i].format == surfaceFormat.format && formats[i].colorSpace == surfaceFormat.colorSpace)
-          surfaceFormatFound = true;
-      if (!surfaceFormatFound)
-        LOG_ERROR("Error, unable to find RGBA8 SRGB surface format...");
+    //   // SRGB is a commonly supported surface format. It's also efficient to
+    //   // write to, so we assume this format.
+    //   // Note, we don't use RGBA since NVIDIA doesn't support this...
+    //   surfaceFormat.format = VK_FORMAT_B8G8R8A8_SRGB;
+    //   surfaceFormat.colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+    //   bool surfaceFormatFound = false;
+    //   std::vector<VkSurfaceFormatKHR> formats;
+    //   uint32_t formatCount;
+    //   vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);
+    //   if (formatCount != 0) {
+    //     formats.resize(formatCount);
+    //     vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, formats.data());
+    //   }
+    //   for (uint32_t i = 0; i < formatCount; ++i)
+    //     if (formats[i].format == surfaceFormat.format && formats[i].colorSpace == surfaceFormat.colorSpace)
+    //       surfaceFormatFound = true;
+    //   if (!surfaceFormatFound)
+    //     LOG_ERROR("Error, unable to find RGBA8 SRGB surface format...");
 
-      // For now, we assume the user wants FIFO, which is similar to vsync.
-      // All vulkan implementations must support FIFO per-spec, so it's
-      // something we can depend on.
-      presentMode = VK_PRESENT_MODE_FIFO_KHR;
-      bool presentModeFound = false;
-      std::vector<VkPresentModeKHR> presentModes;
-      uint32_t presentModeCount;
-      vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
-      if (presentModeCount != 0) {
-        presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
-      }
-      for (uint32_t i = 0; i < presentModeCount; ++i)
-        if (presentModes[i] == presentMode)
-          presentModeFound = true;
-      if (!presentModeFound)
-        LOG_ERROR("Error, unable to find vsync present mode...");
+    //   // For now, we assume the user wants FIFO, which is similar to vsync.
+    //   // All vulkan implementations must support FIFO per-spec, so it's
+    //   // something we can depend on.
+    //   presentMode = VK_PRESENT_MODE_FIFO_KHR;
+    //   bool presentModeFound = false;
+    //   std::vector<VkPresentModeKHR> presentModes;
+    //   uint32_t presentModeCount;
+    //   vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, nullptr);
+    //   if (presentModeCount != 0) {
+    //     presentModes.resize(presentModeCount);
+    //     vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
+    //   }
+    //   for (uint32_t i = 0; i < presentModeCount; ++i)
+    //     if (presentModes[i] == presentMode)
+    //       presentModeFound = true;
+    //   if (!presentModeFound)
+    //     LOG_ERROR("Error, unable to find vsync present mode...");
 
-      // Window extent is the number of pixels truly used by the surface. For
-      // high dps displays (like on mac) the window extent might be larger
-      // than the screen coordinate size.
-      if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-        windowExtent = surfaceCapabilities.currentExtent;
-      } else {
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
-        VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
-        actualExtent.width = std::clamp(actualExtent.width, surfaceCapabilities.minImageExtent.width,
-                                        surfaceCapabilities.maxImageExtent.width);
-        actualExtent.height = std::clamp(actualExtent.height, surfaceCapabilities.minImageExtent.height,
-                                         surfaceCapabilities.maxImageExtent.height);
-        windowExtent = actualExtent;
-      }
+    //   // Window extent is the number of pixels truly used by the surface. For
+    //   // high dps displays (like on mac) the window extent might be larger
+    //   // than the screen coordinate size.
+    //   if (surfaceCapabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
+    //     windowExtent = surfaceCapabilities.currentExtent;
+    //   } else {
+    //     int width, height;
+    //     glfwGetFramebufferSize(window, &width, &height);
+    //     VkExtent2D actualExtent = {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+    //     actualExtent.width = std::clamp(actualExtent.width, surfaceCapabilities.minImageExtent.width,
+    //                                     surfaceCapabilities.maxImageExtent.width);
+    //     actualExtent.height = std::clamp(actualExtent.height, surfaceCapabilities.minImageExtent.height,
+    //                                      surfaceCapabilities.maxImageExtent.height);
+    //     windowExtent = actualExtent;
+    //   }
 
-      // We request one more than the minimum number of images in the swapchain,
-      // since choosing exactly the minimum can cause stalls. We also make sure
-      // to not request more than the maximum number of images.
-      surfaceImageCount = surfaceCapabilities.minImageCount + 1;
-      if (surfaceCapabilities.maxImageCount > 0 && surfaceImageCount > surfaceCapabilities.maxImageCount) {
-        surfaceImageCount = surfaceCapabilities.maxImageCount;
-      }
+    //   // We request one more than the minimum number of images in the swapchain,
+    //   // since choosing exactly the minimum can cause stalls. We also make sure
+    //   // to not request more than the maximum number of images.
+    //   surfaceImageCount = surfaceCapabilities.minImageCount + 1;
+    //   if (surfaceCapabilities.maxImageCount > 0 && surfaceImageCount > surfaceCapabilities.maxImageCount) {
+    //     surfaceImageCount = surfaceCapabilities.maxImageCount;
+    //   }
 
-      // Now, we have enough information to create our swapchain.
-      VkSwapchainCreateInfoKHR createInfo{};
-      createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-      createInfo.surface = surface;
-      createInfo.minImageCount = surfaceImageCount;
-      createInfo.imageFormat = surfaceFormat.format;
-      createInfo.imageColorSpace = surfaceFormat.colorSpace;
-      createInfo.imageExtent = windowExtent;
-      createInfo.imageArrayLayers = 1;   // might be 2 for stereoscopic 3D images like VR
-      createInfo.imageUsage =
-          VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;   // might need to change this...
-      // currently assuming graphics and present queue are the same...
-      createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-      createInfo.queueFamilyIndexCount = 0;       // optional if exclusive
-      createInfo.pQueueFamilyIndices = nullptr;   // optional if exclusive
-      // could use this to flip the image vertically if we want
-      createInfo.preTransform = surfaceCapabilities.currentTransform;
-      // means, we don't composite this window with other OS windows.
-      createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-      createInfo.presentMode = presentMode;
-      // clipped here means we don't care about color of obscured pixels, like
-      // those covered by other OS windows.
-      createInfo.clipped = VK_TRUE;
-      // Since the swapchain can go out of date, we need to supply the out of
-      // date swapchain here.
-      createInfo.oldSwapchain = swapchain;
+    //   // Now, we have enough information to create our swapchain.
+    //   VkSwapchainCreateInfoKHR createInfo{};
+    //   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    //   createInfo.surface = surface;
+    //   createInfo.minImageCount = surfaceImageCount;
+    //   createInfo.imageFormat = surfaceFormat.format;
+    //   createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    //   createInfo.imageExtent = windowExtent;
+    //   createInfo.imageArrayLayers = 1;   // might be 2 for stereoscopic 3D images like VR
+    //   createInfo.imageUsage =
+    //       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;   // might need to change this...
+    //   // currently assuming graphics and present queue are the same...
+    //   createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    //   createInfo.queueFamilyIndexCount = 0;       // optional if exclusive
+    //   createInfo.pQueueFamilyIndices = nullptr;   // optional if exclusive
+    //   // could use this to flip the image vertically if we want
+    //   createInfo.preTransform = surfaceCapabilities.currentTransform;
+    //   // means, we don't composite this window with other OS windows.
+    //   createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    //   createInfo.presentMode = presentMode;
+    //   // clipped here means we don't care about color of obscured pixels, like
+    //   // those covered by other OS windows.
+    //   createInfo.clipped = VK_TRUE;
+    //   // Since the swapchain can go out of date, we need to supply the out of
+    //   // date swapchain here.
+    //   createInfo.oldSwapchain = swapchain;
 
-      // Create the swapchain
-      err = vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &swapchain);
-      if (err != VK_SUCCESS) {
-        LOG_ERROR("Error, failed to create swap chain : \n" + errorString(err));
-      }
+    //   // Create the swapchain
+    //   err = vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &swapchain);
+    //   if (err != VK_SUCCESS) {
+    //     LOG_ERROR("Error, failed to create swap chain : \n" + errorString(err));
+    //   }
 
-      // Now, receive the swapchain images
-      vkGetSwapchainImagesKHR(logicalDevice, swapchain, &surfaceImageCount, nullptr);
-      swapchainImages.resize(surfaceImageCount);
-      vkGetSwapchainImagesKHR(logicalDevice, swapchain, &surfaceImageCount, swapchainImages.data());
+    //   // Now, receive the swapchain images
+    //   vkGetSwapchainImagesKHR(logicalDevice, swapchain, &surfaceImageCount, nullptr);
+    //   swapchainImages.resize(surfaceImageCount);
+    //   vkGetSwapchainImagesKHR(logicalDevice, swapchain, &surfaceImageCount, swapchainImages.data());
 
-      /* Transition all images to presentable */
-      for (uint32_t i = 0; i < swapchainImages.size(); ++i) {
-        transitionImageLayout(swapchainImages[i], surfaceFormat.format, VK_IMAGE_LAYOUT_UNDEFINED,
-                              VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
-      }
+    //   /* Transition all images to presentable */
+    //   for (uint32_t i = 0; i < swapchainImages.size(); ++i) {
+    //     transitionImageLayout(swapchainImages[i], surfaceFormat.format, VK_IMAGE_LAYOUT_UNDEFINED,
+    //                           VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    //   }
 
-      // And acquire the first image to use
-      vkAcquireNextImageKHR(logicalDevice, swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE,
-                            &currentImageIndex);
-    }
+    //   // And acquire the first image to use
+    //   vkAcquireNextImageKHR(logicalDevice, swapchain, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE,
+    //                         &currentImageIndex);
+    // }
 
     // For texture / sampler arrays, we need some defaults
     {
@@ -3949,42 +3964,43 @@ struct Context {
       VK_CHECK_RESULT(vkAllocateDescriptorSets(logicalDevice, &descriptorSetAllocateInfo, &computeRecordDescriptorSet));
     }
 
-    // Init imgui
-    if (requestedFeatures.window) {
-      // 1: create descriptor pool for IMGUI
-      // the size of the pool is very oversize, but it's copied from imgui demo itself.
-      VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
-                                           {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
-                                           {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
-                                           {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
-                                           {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
-                                           {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
+    // // Init imgui
+    // if (requestedFeatures.window) {
+    // PING;
+    //   // 1: create descriptor pool for IMGUI
+    //   // the size of the pool is very oversize, but it's copied from imgui demo itself.
+    //   VkDescriptorPoolSize pool_sizes[] = {{VK_DESCRIPTOR_TYPE_SAMPLER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000},
+    //                                        {VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000}};
 
-      VkDescriptorPoolCreateInfo pool_info = {};
-      pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-      pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-      pool_info.maxSets = 1000;
-      pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
-      pool_info.pPoolSizes = pool_sizes;
+    //   VkDescriptorPoolCreateInfo pool_info = {};
+    //   pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    //   pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    //   pool_info.maxSets = 1000;
+    //   pool_info.poolSizeCount = (uint32_t)std::size(pool_sizes);
+    //   pool_info.pPoolSizes = pool_sizes;
 
-      VK_CHECK_RESULT(vkCreateDescriptorPool(logicalDevice, &pool_info, nullptr, &imguiPool));
+    //   VK_CHECK_RESULT(vkCreateDescriptorPool(logicalDevice, &pool_info, nullptr, &imguiPool));
 
-      // 2: initialize imgui library
+    //   // 2: initialize imgui library
 
-      // this initializes the core structures of imgui
-      ImGui::CreateContext();
+    //   // this initializes the core structures of imgui
+    //   ImGui::CreateContext();
 
-      // this initializes imgui for SDL
-      ImGui_ImplGlfw_InitForVulkan(window, true);
+    //   // this initializes imgui for SDL
+    //   ImGui_ImplGlfw_InitForVulkan(window, true);
 
-      // Call new frame here to initialize some internal imgui data
-      ImGui_ImplGlfw_NewFrame();
-    }
+    //   // Call new frame here to initialize some internal imgui data
+    //   ImGui_ImplGlfw_NewFrame();
+    // }
 
     // Finally, setup the internal shader stages and build an initial shader binding table
     setupInternalPrograms();
@@ -4110,19 +4126,19 @@ struct Context {
       vkDestroyDescriptorPool(logicalDevice, bufferDescriptorPool, nullptr);
       bufferDescriptorPool = nullptr;
     }
-    if (imguiPool) {
-      vkDestroyDescriptorPool(logicalDevice, imguiPool, nullptr);
-      imguiPool = nullptr;
-    }
-    if (imgui.renderPass) {
-      ImGui_ImplVulkan_Shutdown();
-      vkDestroyRenderPass(logicalDevice, imgui.renderPass, nullptr);
-      imgui.renderPass = nullptr;
-    }
-    if (imgui.frameBuffer) {
-      vkDestroyFramebuffer(logicalDevice, imgui.frameBuffer, nullptr);
-      imgui.frameBuffer = nullptr;
-    }
+    // if (imguiPool) {
+    //   vkDestroyDescriptorPool(logicalDevice, imguiPool, nullptr);
+    //   imguiPool = nullptr;
+    // }
+    // if (imgui.renderPass) {
+    //   ImGui_ImplVulkan_Shutdown();
+    //   vkDestroyRenderPass(logicalDevice, imgui.renderPass, nullptr);
+    //   imgui.renderPass = nullptr;
+    // }
+    // if (imgui.frameBuffer) {
+    //   vkDestroyFramebuffer(logicalDevice, imgui.frameBuffer, nullptr);
+    //   imgui.frameBuffer = nullptr;
+    // }
 
     if (imageAvailableSemaphore) {
       vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
@@ -4138,15 +4154,15 @@ struct Context {
       inFlightFence = nullptr;
     }
 
-    if (swapchain) {
-      vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
-      swapchain = nullptr;
-    }
-    if (window) {
-      glfwDestroyWindow(window);
-      glfwTerminate();
-      window = nullptr;
-    }
+    // if (swapchain) {
+    //   vkDestroySwapchainKHR(logicalDevice, swapchain, nullptr);
+    //   swapchain = nullptr;
+    // }
+    // if (window) {
+    //   glfwDestroyWindow(window);
+    //   glfwTerminate();
+    //   window = nullptr;
+    // }
     if (surface) {
       vkDestroySurfaceKHR(instance, surface, nullptr);
       surface = nullptr;
@@ -4788,206 +4804,206 @@ struct Context {
     endSingleTimeCommands(commandBuffer, graphicsCommandPool, graphicsQueue);
   }
 
-  // For ImGui
-  void setRasterAttachments(Texture *colorTexture, Texture *depthTexture) {
-    if (colorTexture->width != depthTexture->width || colorTexture->height != depthTexture->height) {
-      throw std::runtime_error("Error, color and depth attachment textures must have equal dimensions!");
-    } else {
-      imgui.width = colorTexture->width;
-      imgui.height = colorTexture->height;
-    }
+  // // For ImGui
+  // void setRasterAttachments(Texture *colorTexture, Texture *depthTexture) {
+  //   if (colorTexture->width != depthTexture->width || colorTexture->height != depthTexture->height) {
+  //     throw std::runtime_error("Error, color and depth attachment textures must have equal dimensions!");
+  //   } else {
+  //     imgui.width = colorTexture->width;
+  //     imgui.height = colorTexture->height;
+  //   }
 
-    imgui.colorAttachment = colorTexture;
-    imgui.depthAttachment = depthTexture;
+  //   imgui.colorAttachment = colorTexture;
+  //   imgui.depthAttachment = depthTexture;
 
-    VkAttachmentDescription colorAttachment{};
-    colorAttachment.format = colorTexture->format;
-    colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    // clear here says to clear the values to a constant at start.
-    // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-    colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;   // DONT_CARE;
-    // save rasterized fragments to memory
-    colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    // not currently using a stencil
-    colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    // Initial and final layouts of the texture
-    colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    colorAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+  //   VkAttachmentDescription colorAttachment{};
+  //   colorAttachment.format = colorTexture->format;
+  //   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  //   // clear here says to clear the values to a constant at start.
+  //   // colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  //   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;   // DONT_CARE;
+  //   // save rasterized fragments to memory
+  //   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  //   // not currently using a stencil
+  //   colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  //   colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  //   // Initial and final layouts of the texture
+  //   colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  //   colorAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-    VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = depthTexture->format;
-    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;   // VK_ATTACHMENT_LOAD_OP_CLEAR;
-    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
+  //   VkAttachmentDescription depthAttachment{};
+  //   depthAttachment.format = depthTexture->format;
+  //   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+  //   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;   // VK_ATTACHMENT_LOAD_OP_CLEAR;
+  //   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+  //   depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+  //   depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  //   depthAttachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  //   depthAttachment.finalLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-    std::vector<VkAttachmentDescription> attachments = {colorAttachment, depthAttachment};
+  //   std::vector<VkAttachmentDescription> attachments = {colorAttachment, depthAttachment};
 
-    VkAttachmentReference colorAttachmentRef{};
-    colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  //   VkAttachmentReference colorAttachmentRef{};
+  //   colorAttachmentRef.attachment = 0;
+  //   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentReference depthAttachmentRef{};
-    depthAttachmentRef.attachment = 1;
-    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  //   VkAttachmentReference depthAttachmentRef{};
+  //   depthAttachmentRef.attachment = 1;
+  //   depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &colorAttachmentRef;
-    subpass.pDepthStencilAttachment = &depthAttachmentRef;
+  //   VkSubpassDescription subpass{};
+  //   subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+  //   subpass.colorAttachmentCount = 1;
+  //   subpass.pColorAttachments = &colorAttachmentRef;
+  //   subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.srcAccessMask = 0;
-    dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  //   VkSubpassDependency dependency{};
+  //   dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+  //   dependency.dstSubpass = 0;
+  //   dependency.srcStageMask =
+  //       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  //   dependency.srcAccessMask = 0;
+  //   dependency.dstStageMask =
+  //       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+  //   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    VkRenderPassCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    createInfo.pNext = nullptr;
-    createInfo.attachmentCount = (uint32_t)attachments.size();
-    createInfo.pAttachments = attachments.data();
-    createInfo.subpassCount = 1;
-    createInfo.pSubpasses = &subpass;
-    createInfo.dependencyCount = 1;
-    createInfo.pDependencies = &dependency;
+  //   VkRenderPassCreateInfo createInfo{};
+  //   createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+  //   createInfo.pNext = nullptr;
+  //   createInfo.attachmentCount = (uint32_t)attachments.size();
+  //   createInfo.pAttachments = attachments.data();
+  //   createInfo.subpassCount = 1;
+  //   createInfo.pSubpasses = &subpass;
+  //   createInfo.dependencyCount = 1;
+  //   createInfo.pDependencies = &dependency;
 
-    vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &imgui.renderPass);
+  //   vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &imgui.renderPass);
 
-    VkImageView attachmentViews[] = {imgui.colorAttachment->imageView, imgui.depthAttachment->imageView};
+  //   VkImageView attachmentViews[] = {imgui.colorAttachment->imageView, imgui.depthAttachment->imageView};
 
-    VkFramebufferCreateInfo framebufferInfo{};
-    framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebufferInfo.renderPass = imgui.renderPass;
-    framebufferInfo.attachmentCount = 2;
-    framebufferInfo.pAttachments = attachmentViews;
-    framebufferInfo.width = imgui.width;
-    framebufferInfo.height = imgui.height;
-    framebufferInfo.layers = 1;
+  //   VkFramebufferCreateInfo framebufferInfo{};
+  //   framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+  //   framebufferInfo.renderPass = imgui.renderPass;
+  //   framebufferInfo.attachmentCount = 2;
+  //   framebufferInfo.pAttachments = attachmentViews;
+  //   framebufferInfo.width = imgui.width;
+  //   framebufferInfo.height = imgui.height;
+  //   framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &imgui.frameBuffer) != VK_SUCCESS) {
-      throw std::runtime_error("failed to create framebuffer!");
-    }
+  //   if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &imgui.frameBuffer) != VK_SUCCESS) {
+  //     throw std::runtime_error("failed to create framebuffer!");
+  //   }
 
-    // this initializes imgui for Vulkan
-    ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = instance;
-    init_info.PhysicalDevice = physicalDevice;
-    init_info.Device = logicalDevice;
-    init_info.Queue = graphicsQueue;
-    init_info.DescriptorPool = imguiPool;
-    init_info.MinImageCount = 2;
-    init_info.ImageCount = 2;
-    init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+  //   // this initializes imgui for Vulkan
+  //   ImGui_ImplVulkan_InitInfo init_info = {};
+  //   init_info.Instance = instance;
+  //   init_info.PhysicalDevice = physicalDevice;
+  //   init_info.Device = logicalDevice;
+  //   init_info.Queue = graphicsQueue;
+  //   init_info.DescriptorPool = imguiPool;
+  //   init_info.MinImageCount = 2;
+  //   init_info.ImageCount = 2;
+  //   init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-    ImGui_ImplVulkan_Init(&init_info, imgui.renderPass);
+  //   ImGui_ImplVulkan_Init(&init_info, imgui.renderPass);
 
-    // execute a gpu command to upload imgui font textures
-    VkCommandBufferBeginInfo cmdBufInfo{};
-    cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    VK_CHECK_RESULT(vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo));
-    ImGui_ImplVulkan_CreateFontsTexture(graphicsCommandBuffer);
-    VK_CHECK_RESULT(vkEndCommandBuffer(graphicsCommandBuffer));
+  //   // execute a gpu command to upload imgui font textures
+  //   VkCommandBufferBeginInfo cmdBufInfo{};
+  //   cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  //   VK_CHECK_RESULT(vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo));
+  //   ImGui_ImplVulkan_CreateFontsTexture(graphicsCommandBuffer);
+  //   VK_CHECK_RESULT(vkEndCommandBuffer(graphicsCommandBuffer));
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = NULL;
-    submitInfo.waitSemaphoreCount = 0;
-    submitInfo.pWaitSemaphores = nullptr;
-    submitInfo.pWaitDstStageMask = nullptr;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &graphicsCommandBuffer;
-    submitInfo.signalSemaphoreCount = 0;
-    submitInfo.pSignalSemaphores = nullptr;
+  //   VkSubmitInfo submitInfo{};
+  //   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  //   submitInfo.pNext = NULL;
+  //   submitInfo.waitSemaphoreCount = 0;
+  //   submitInfo.pWaitSemaphores = nullptr;
+  //   submitInfo.pWaitDstStageMask = nullptr;
+  //   submitInfo.commandBufferCount = 1;
+  //   submitInfo.pCommandBuffers = &graphicsCommandBuffer;
+  //   submitInfo.signalSemaphoreCount = 0;
+  //   submitInfo.pSignalSemaphores = nullptr;
 
-    VK_CHECK_RESULT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
-    VK_CHECK_RESULT(vkQueueWaitIdle(graphicsQueue));
+  //   VK_CHECK_RESULT(vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE));
+  //   VK_CHECK_RESULT(vkQueueWaitIdle(graphicsQueue));
 
-    // clear font textures from cpu data
-    ImGui_ImplVulkan_DestroyFontUploadObjects();
-  }
+  //   // clear font textures from cpu data
+  //   ImGui_ImplVulkan_DestroyFontUploadObjects();
+  // }
 
-  void rasterizeGui() {
-    ImGui::Render();
-    ImDrawData *draw_data = ImGui::GetDrawData();
+//   void rasterizeGui() {
+//     ImGui::Render();
+//     ImDrawData *draw_data = ImGui::GetDrawData();
 
-    VkResult err;
-    VkCommandBufferBeginInfo cmdBufInfo{};
-    cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+//     VkResult err;
+//     VkCommandBufferBeginInfo cmdBufInfo{};
+//     cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    VkRenderPassBeginInfo renderPassBeginInfo = {};
-    renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassBeginInfo.pNext = nullptr;
-    renderPassBeginInfo.renderPass = imgui.renderPass;
-    renderPassBeginInfo.renderArea.offset.x = 0;
-    renderPassBeginInfo.renderArea.offset.y = 0;
-    renderPassBeginInfo.renderArea.extent.width = imgui.width;
-    renderPassBeginInfo.renderArea.extent.height = imgui.height;
-    renderPassBeginInfo.clearValueCount = 0;
-    renderPassBeginInfo.pClearValues = nullptr;
-    renderPassBeginInfo.framebuffer = imgui.frameBuffer;
+//     VkRenderPassBeginInfo renderPassBeginInfo = {};
+//     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+//     renderPassBeginInfo.pNext = nullptr;
+//     renderPassBeginInfo.renderPass = imgui.renderPass;
+//     renderPassBeginInfo.renderArea.offset.x = 0;
+//     renderPassBeginInfo.renderArea.offset.y = 0;
+//     renderPassBeginInfo.renderArea.extent.width = imgui.width;
+//     renderPassBeginInfo.renderArea.extent.height = imgui.height;
+//     renderPassBeginInfo.clearValueCount = 0;
+//     renderPassBeginInfo.pClearValues = nullptr;
+//     renderPassBeginInfo.framebuffer = imgui.frameBuffer;
 
-    err = vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo);
+//     err = vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo);
 
-    // Transition our attachments into optimal attachment formats
-    imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image,
-                                          imgui.colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
+//     // Transition our attachments into optimal attachment formats
+//     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image,
+//                                           imgui.colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+//                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
 
-    imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image,
-                                          imgui.depthAttachment->layout,
-                                          VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-                                          {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
+//     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image,
+//                                           imgui.depthAttachment->layout,
+//                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+//                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
 
-    // This will clear the color and depth attachment
-    vkCmdBeginRenderPass(graphicsCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+//     // This will clear the color and depth attachment
+//     vkCmdBeginRenderPass(graphicsCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    // Record dear imgui primitives into command buffer
-    ImGui_ImplVulkan_RenderDrawData(draw_data, graphicsCommandBuffer);
+//     // Record dear imgui primitives into command buffer
+//     ImGui_ImplVulkan_RenderDrawData(draw_data, graphicsCommandBuffer);
 
-    vkCmdEndRenderPass(graphicsCommandBuffer);
+//     vkCmdEndRenderPass(graphicsCommandBuffer);
 
-    // At the end of the renderpass, we'll transition the layout back to it's previous layout
-    imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-                                          imgui.colorAttachment->layout,
-                                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
+//     // At the end of the renderpass, we'll transition the layout back to it's previous layout
+//     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+//                                           imgui.colorAttachment->layout,
+//                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
 
-    imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-                                          imgui.depthAttachment->layout,
-                                          {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
+//     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+//                                           imgui.depthAttachment->layout,
+//                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
 
-    err = vkEndCommandBuffer(graphicsCommandBuffer);
-    if (err)
-      LOG_ERROR("failed to end command buffer! : \n" + errorString(err));
+//     err = vkEndCommandBuffer(graphicsCommandBuffer);
+//     if (err)
+//       LOG_ERROR("failed to end command buffer! : \n" + errorString(err));
 
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.pNext = NULL;
-    submitInfo.waitSemaphoreCount = 0;
-    submitInfo.pWaitSemaphores = nullptr;     //&acquireImageSemaphoreHandleList[currentFrame];
-    submitInfo.pWaitDstStageMask = nullptr;   //&pipelineStageFlags;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &graphicsCommandBuffer;
-    submitInfo.signalSemaphoreCount = 0;
-    submitInfo.pSignalSemaphores = nullptr;   //&writeImageSemaphoreHandleList[currentImageIndex]};
+//     VkSubmitInfo submitInfo{};
+//     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+//     submitInfo.pNext = NULL;
+//     submitInfo.waitSemaphoreCount = 0;
+//     submitInfo.pWaitSemaphores = nullptr;     //&acquireImageSemaphoreHandleList[currentFrame];
+//     submitInfo.pWaitDstStageMask = nullptr;   //&pipelineStageFlags;
+//     submitInfo.commandBufferCount = 1;
+//     submitInfo.pCommandBuffers = &graphicsCommandBuffer;
+//     submitInfo.signalSemaphoreCount = 0;
+//     submitInfo.pSignalSemaphores = nullptr;   //&writeImageSemaphoreHandleList[currentImageIndex]};
 
-    err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    if (err)
-      LOG_ERROR("failed to submit to queue! : \n" + errorString(err));
+//     err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+//     if (err)
+//       LOG_ERROR("failed to submit to queue! : \n" + errorString(err));
 
-    err = vkQueueWaitIdle(graphicsQueue);
-    if (err)
-      LOG_ERROR("failed to wait for queue idle! : \n" + errorString(err));
-  }
+//     err = vkQueueWaitIdle(graphicsQueue);
+//     if (err)
+//       LOG_ERROR("failed to wait for queue idle! : \n" + errorString(err));
+//   }
 };
 
 
@@ -8212,7 +8228,6 @@ void Context::buildPipeline() {
 
     pipelineLayoutCI.pushConstantRangeCount = 1;
     pipelineLayoutCI.pPushConstantRanges = &pushConstantRange;
-
     if (raytracingPipelineLayout != VK_NULL_HANDLE) {
       vkDestroyPipelineLayout(logicalDevice, raytracingPipelineLayout, nullptr);
       raytracingPipelineLayout = VK_NULL_HANDLE;
@@ -8424,7 +8439,7 @@ void Context::buildPipeline() {
 
 
 GPRT_API
-int gprtFindSuitableDevices(uint32_t *usableDevices, int maxUsableToSearchFor)
+int gprtFindSuitableDevices(int *usableDevices, int maxUsableToSearchFor)
   {
   VkInstance instance;
     VkApplicationInfo appInfo;
@@ -8490,22 +8505,22 @@ int gprtFindSuitableDevices(uint32_t *usableDevices, int maxUsableToSearchFor)
     }
 
 
-    uint32_t glfwExtensionCount = 0;
-    const char **glfwExtensions;
-    if (requestedFeatures.window) {
-      if (!glfwInit()) {
-        LOG_WARNING("Unable to create window. Falling back to headless mode.");
-        requestedFeatures.window = false;
-      } else {
-        if (!glfwVulkanSupported()) {
-          LOG_ERROR("Window requested but unsupported!");
-        }
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-        for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
-          instanceExtensions.push_back(glfwExtensions[i]);
-        }
-      }
-    }
+    // uint32_t glfwExtensionCount = 0;
+    // const char **glfwExtensions;
+    // if (requestedFeatures.window) {
+    //   if (!glfwInit()) {
+    //     LOG_WARNING("Unable to create window. Falling back to headless mode.");
+    //     requestedFeatures.window = false;
+    //   } else {
+    //     if (!glfwVulkanSupported()) {
+    //       LOG_ERROR("Window requested but unsupported!");
+    //     }
+    //     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+    //     for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
+    //       instanceExtensions.push_back(glfwExtensions[i]);
+    //     }
+    //   }
+    // }
 
 #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
     instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
@@ -8646,11 +8661,11 @@ int gprtFindSuitableDevices(uint32_t *usableDevices, int maxUsableToSearchFor)
     // Required by VK_KHR_spirv_1_4
     enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 
-    if (requestedFeatures.window) {
-      // If the device will be used for presenting to a display via a swapchain
-      // we need to request the swapchain extension
-      enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    }
+    // if (requestedFeatures.window) {
+    //   // If the device will be used for presenting to a display via a swapchain
+    //   // we need to request the swapchain extension
+    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    // }
 
     if (requestedFeatures.rayQueries) {
       // If the device will be using ray queries for inline ray tracing,
@@ -8749,372 +8764,372 @@ gprtRequestRecordSize(uint32_t recordSize) {
   requestedFeatures.recordSize = recordSize;
 }
 
-GPRT_API bool
-gprtWindowShouldClose(GPRTContext _context) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return true;
-
-  glfwPollEvents();
-
-  // Start the Dear ImGui frame
-  // ImGui_ImplVulkan_NewFrame(); // I'm not entirely convinced this is needed?
-  ImGui_ImplGlfw_NewFrame();   // if GLFW isn't available this might be odd...
-
-  return glfwWindowShouldClose(context->window);
-}
-
-GPRT_API void
-gprtSetWindowTitle(GPRTContext _context, const char *title) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return;
-
-  glfwSetWindowTitle(context->window, title);
-}
-
-GPRT_API void
-gprtGetCursorPos(GPRTContext _context, double *xpos, double *ypos) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return;
-
-  glfwGetCursorPos(context->window, xpos, ypos);
-}
-
-GPRT_API int
-gprtGetMouseButton(GPRTContext _context, int button) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return GPRT_RELEASE;
-
-  return glfwGetMouseButton(context->window, button);
-}
-
-GPRT_API int
-gprtGetKey(GPRTContext _context, int key) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return GPRT_RELEASE;
-
-  return glfwGetKey(context->window, key);
-}
-
-GPRT_API double
-gprtGetTime(GPRTContext _context) {
-  LOG_API_CALL();
-  Context *context = (Context *) _context;
-  if (!requestedFeatures.window)
-    return 0.0;
-  return glfwGetTime();
-}
-
-GPRT_API void
-gprtTexturePresent(GPRTContext _context, GPRTTexture _texture) {
-  LOG_API_CALL();
-  if (!requestedFeatures.window)
-    return;
-  Context *context = (Context *) _context;
-  Texture *texture = (Texture *) _texture;
-
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-  // VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
-  // submitInfo.signalSemaphoreCount = 1;
-  // submitInfo.pSignalSemaphores = signalSemaphores;
-
-  VkCommandBuffer commandBuffer = context->beginSingleTimeCommands(context->graphicsCommandPool);
-
-  // transition image layout from PRESENT_SRC to TRANSFER_DST
-  {
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-    // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
-    // of the original image. I'm assuming this is ok.
-    barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // The new layout for the image
-    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-    // If we're transferring which queue owns this image, we need to set these.
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    // specify the image that is affected and the specific parts of that image.
-    barrier.image = context->swapchainImages[context->currentImageIndex];
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
-
-    sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-
-    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-
-    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  }
-
-  // transfer the texture to a transfer source
-  texture->setImageLayout(commandBuffer, texture->image, texture->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture->mipLevels, 0, 1});
-
-  // now do the transfer
-  {
-    VkImageBlit region{};
-
-    region.srcOffsets[0].x = 0;
-    region.srcOffsets[0].y = 0;
-    region.srcOffsets[0].z = 0;
-    region.srcOffsets[1].x = context->windowExtent.width;
-    region.srcOffsets[1].y = context->windowExtent.height;
-    region.srcOffsets[1].z = 1;
-
-    region.dstOffsets[0].x = 0;
-    region.dstOffsets[0].y = 0;
-    region.dstOffsets[0].z = 0;
-    region.dstOffsets[1].x = texture->width;
-    region.dstOffsets[1].y = texture->height;
-    region.dstOffsets[1].z = 1;
-
-    region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.srcSubresource.baseArrayLayer = 0;
-    region.srcSubresource.layerCount = 1;
-    region.srcSubresource.mipLevel = 0;
-
-    region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.dstSubresource.baseArrayLayer = 0;
-    region.dstSubresource.layerCount = 1;
-    region.dstSubresource.mipLevel = 0;
-
-    vkCmdBlitImage(commandBuffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                   context->swapchainImages[context->currentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
-                   &region, VK_FILTER_LINEAR);
-  }
-
-  // now go from TRANSFER_DST back to PRESENT_SRC
-  {
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-    // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
-    // of the original image. I'm assuming this is ok.
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-    // The new layout for the image
-    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // If we're transferring which queue owns this image, we need to set these.
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    // specify the image that is affected and the specific parts of that image.
-    barrier.image = context->swapchainImages[context->currentImageIndex];
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
-
-    sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-
-    destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-
-    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  }
-
-  // and revert the texture format back to its previous layout
-  texture->setImageLayout(commandBuffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->layout,
-                          {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture->mipLevels, 0, 1});
-
-  context->endSingleTimeCommands(commandBuffer, context->graphicsCommandPool, context->graphicsQueue);
-
-  presentInfo.waitSemaphoreCount = 0;
-  presentInfo.pWaitSemaphores = VK_NULL_HANDLE;
-
-  VkSwapchainKHR swapchains[] = {context->swapchain};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapchains;
-  presentInfo.pImageIndices = &context->currentImageIndex;
-
-  presentInfo.pResults = nullptr;
-
-  // currently throwing an error because the images given by the swapchain don't
-  // have a defined layout...
-  VkResult err1 = vkQueuePresentKHR(context->graphicsQueue, &presentInfo);
-
-  VkResult err2 = vkAcquireNextImageKHR(context->logicalDevice, context->swapchain, UINT64_MAX, VK_NULL_HANDLE,
-                                        context->inFlightFence, &context->currentImageIndex);
-  vkWaitForFences(context->logicalDevice, 1, &context->inFlightFence, true, UINT_MAX);
-  vkResetFences(context->logicalDevice, 1, &context->inFlightFence);
-}
-
-GPRT_API void
-gprtBufferPresent(GPRTContext _context, GPRTBuffer _buffer) {
-  LOG_API_CALL();
-  if (!requestedFeatures.window)
-    return;
-  Context *context = (Context *) _context;
-  Buffer *buffer = (Buffer *) _buffer;
-
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
-  // VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
-  // submitInfo.signalSemaphoreCount = 1;
-  // submitInfo.pSignalSemaphores = signalSemaphores;
-
-  VkCommandBuffer commandBuffer = context->beginSingleTimeCommands(context->graphicsCommandPool);
-
-  // transition image layout from PRESENT_SRC to TRANSFER_DST
-  {
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-    // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
-    // of the original image. I'm assuming this is ok.
-    barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // The new layout for the image
-    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-    // If we're transferring which queue owns this image, we need to set these.
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    // specify the image that is affected and the specific parts of that image.
-    barrier.image = context->swapchainImages[context->currentImageIndex];
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
-
-    sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-
-    destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-
-    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  }
-
-  // now do the transfer
-  {
-    VkBufferImageCopy region{};
-    region.bufferOffset = 0;
-    // if 0, vulkan assumes buffer memory is tightly packed
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
-
-    region.imageOffset.x = 0;
-    region.imageOffset.y = 0;
-    region.imageOffset.z = 0;
-
-    region.imageExtent.width = context->windowExtent.width;
-    region.imageExtent.height = context->windowExtent.height;
-    region.imageExtent.depth = 1;
-
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
-
-    vkCmdCopyBufferToImage(commandBuffer, buffer->buffer, context->swapchainImages[context->currentImageIndex],
-                           VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-  }
-
-  // now go from TRANSFER_DST back to PRESENT_SRC
-  {
-    VkImageMemoryBarrier barrier{};
-    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-
-    // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
-    // of the original image. I'm assuming this is ok.
-    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-    // The new layout for the image
-    barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-    // If we're transferring which queue owns this image, we need to set these.
-    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-    // specify the image that is affected and the specific parts of that image.
-    barrier.image = context->swapchainImages[context->currentImageIndex];
-    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    barrier.subresourceRange.baseMipLevel = 0;
-    barrier.subresourceRange.levelCount = 1;
-    barrier.subresourceRange.baseArrayLayer = 0;
-    barrier.subresourceRange.layerCount = 1;
-
-    VkPipelineStageFlags sourceStage;
-    VkPipelineStageFlags destinationStage;
-
-    sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
-
-    destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-
-    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-  }
-
-  context->endSingleTimeCommands(commandBuffer, context->graphicsCommandPool, context->graphicsQueue);
-
-  presentInfo.waitSemaphoreCount = 0;
-  presentInfo.pWaitSemaphores = VK_NULL_HANDLE;
-
-  VkSwapchainKHR swapchains[] = {context->swapchain};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapchains;
-  presentInfo.pImageIndices = &context->currentImageIndex;
-
-  presentInfo.pResults = nullptr;
-
-  // currently throwing an error because the images given by the swapchain don't
-  // have a defined layout...
-  VkResult err1 = vkQueuePresentKHR(context->graphicsQueue, &presentInfo);
-
-  VkResult err2 = vkAcquireNextImageKHR(context->logicalDevice, context->swapchain, UINT64_MAX, VK_NULL_HANDLE,
-                                        context->inFlightFence, &context->currentImageIndex);
-  vkWaitForFences(context->logicalDevice, 1, &context->inFlightFence, true, UINT_MAX);
-  vkResetFences(context->logicalDevice, 1, &context->inFlightFence);
-}
-
-GPRT_API void
-gprtGuiSetRasterAttachments(GPRTContext _context, GPRTTexture _colorAttachment, GPRTTexture _depthAttachment) {
-  Context *context = (Context *) _context;
-  Texture *colorAttachment = (Texture *) _colorAttachment;
-  Texture *depthAttachment = (Texture *) _depthAttachment;
-  context->setRasterAttachments(colorAttachment, depthAttachment);
-}
-
-GPRT_API void
-gprtGuiRasterize(GPRTContext _context) {
-  Context *context = (Context *) _context;
-  context->rasterizeGui();
-}
+// GPRT_API bool
+// gprtWindowShouldClose(GPRTContext _context) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return true;
+
+//   glfwPollEvents();
+
+//   // Start the Dear ImGui frame
+//   // ImGui_ImplVulkan_NewFrame(); // I'm not entirely convinced this is needed?
+//   ImGui_ImplGlfw_NewFrame();   // if GLFW isn't available this might be odd...
+
+//   return glfwWindowShouldClose(context->window);
+// }
+
+// GPRT_API void
+// gprtSetWindowTitle(GPRTContext _context, const char *title) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return;
+
+//   glfwSetWindowTitle(context->window, title);
+// }
+
+// GPRT_API void
+// gprtGetCursorPos(GPRTContext _context, double *xpos, double *ypos) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return;
+
+//   glfwGetCursorPos(context->window, xpos, ypos);
+// }
+
+// GPRT_API int
+// gprtGetMouseButton(GPRTContext _context, int button) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return GPRT_RELEASE;
+
+//   return glfwGetMouseButton(context->window, button);
+// }
+
+// GPRT_API int
+// gprtGetKey(GPRTContext _context, int key) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return GPRT_RELEASE;
+
+//   return glfwGetKey(context->window, key);
+// }
+
+// GPRT_API double
+// gprtGetTime(GPRTContext _context) {
+//   LOG_API_CALL();
+//   Context *context = (Context *) _context;
+//   if (!requestedFeatures.window)
+//     return 0.0;
+//   return glfwGetTime();
+// }
+
+// GPRT_API void
+// gprtTexturePresent(GPRTContext _context, GPRTTexture _texture) {
+//   LOG_API_CALL();
+//   if (!requestedFeatures.window)
+//     return;
+//   Context *context = (Context *) _context;
+//   Texture *texture = (Texture *) _texture;
+
+//   VkPresentInfoKHR presentInfo{};
+//   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+//   // VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+//   // submitInfo.signalSemaphoreCount = 1;
+//   // submitInfo.pSignalSemaphores = signalSemaphores;
+
+//   VkCommandBuffer commandBuffer = context->beginSingleTimeCommands(context->graphicsCommandPool);
+
+//   // transition image layout from PRESENT_SRC to TRANSFER_DST
+//   {
+//     VkImageMemoryBarrier barrier{};
+//     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+//     // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
+//     // of the original image. I'm assuming this is ok.
+//     barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+//     // The new layout for the image
+//     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+//     // If we're transferring which queue owns this image, we need to set these.
+//     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+//     // specify the image that is affected and the specific parts of that image.
+//     // barrier.image = context->swapchainImages[context->currentImageIndex];
+//     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     barrier.subresourceRange.baseMipLevel = 0;
+//     barrier.subresourceRange.levelCount = 1;
+//     barrier.subresourceRange.baseArrayLayer = 0;
+//     barrier.subresourceRange.layerCount = 1;
+
+//     VkPipelineStageFlags sourceStage;
+//     VkPipelineStageFlags destinationStage;
+
+//     sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//     barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+//     destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+//     barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+//     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+//   }
+
+//   // transfer the texture to a transfer source
+//   texture->setImageLayout(commandBuffer, texture->image, texture->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+//                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture->mipLevels, 0, 1});
+
+//   // now do the transfer
+//   {
+//     VkImageBlit region{};
+
+//     region.srcOffsets[0].x = 0;
+//     region.srcOffsets[0].y = 0;
+//     region.srcOffsets[0].z = 0;
+//     region.srcOffsets[1].x = context->windowExtent.width;
+//     region.srcOffsets[1].y = context->windowExtent.height;
+//     region.srcOffsets[1].z = 1;
+
+//     region.dstOffsets[0].x = 0;
+//     region.dstOffsets[0].y = 0;
+//     region.dstOffsets[0].z = 0;
+//     region.dstOffsets[1].x = texture->width;
+//     region.dstOffsets[1].y = texture->height;
+//     region.dstOffsets[1].z = 1;
+
+//     region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     region.srcSubresource.baseArrayLayer = 0;
+//     region.srcSubresource.layerCount = 1;
+//     region.srcSubresource.mipLevel = 0;
+
+//     region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     region.dstSubresource.baseArrayLayer = 0;
+//     region.dstSubresource.layerCount = 1;
+//     region.dstSubresource.mipLevel = 0;
+
+//     vkCmdBlitImage(commandBuffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+//                    context->swapchainImages[context->currentImageIndex], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1,
+//                    &region, VK_FILTER_LINEAR);
+//   }
+
+//   // now go from TRANSFER_DST back to PRESENT_SRC
+//   {
+//     VkImageMemoryBarrier barrier{};
+//     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+//     // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
+//     // of the original image. I'm assuming this is ok.
+//     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+//     // The new layout for the image
+//     barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+//     // If we're transferring which queue owns this image, we need to set these.
+//     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+//     // specify the image that is affected and the specific parts of that image.
+//     barrier.image = context->swapchainImages[context->currentImageIndex];
+//     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     barrier.subresourceRange.baseMipLevel = 0;
+//     barrier.subresourceRange.levelCount = 1;
+//     barrier.subresourceRange.baseArrayLayer = 0;
+//     barrier.subresourceRange.layerCount = 1;
+
+//     VkPipelineStageFlags sourceStage;
+//     VkPipelineStageFlags destinationStage;
+
+//     sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+//     barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+//     destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//     barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+//     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+//   }
+
+//   // and revert the texture format back to its previous layout
+//   texture->setImageLayout(commandBuffer, texture->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, texture->layout,
+//                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture->mipLevels, 0, 1});
+
+//   context->endSingleTimeCommands(commandBuffer, context->graphicsCommandPool, context->graphicsQueue);
+
+//   presentInfo.waitSemaphoreCount = 0;
+//   presentInfo.pWaitSemaphores = VK_NULL_HANDLE;
+
+//   VkSwapchainKHR swapchains[] = {context->swapchain};
+//   presentInfo.swapchainCount = 1;
+//   presentInfo.pSwapchains = swapchains;
+//   presentInfo.pImageIndices = &context->currentImageIndex;
+
+//   presentInfo.pResults = nullptr;
+
+//   // currently throwing an error because the images given by the swapchain don't
+//   // have a defined layout...
+//   VkResult err1 = vkQueuePresentKHR(context->graphicsQueue, &presentInfo);
+
+//   VkResult err2 = vkAcquireNextImageKHR(context->logicalDevice, context->swapchain, UINT64_MAX, VK_NULL_HANDLE,
+//                                         context->inFlightFence, &context->currentImageIndex);
+//   vkWaitForFences(context->logicalDevice, 1, &context->inFlightFence, true, UINT_MAX);
+//   vkResetFences(context->logicalDevice, 1, &context->inFlightFence);
+// }
+
+// GPRT_API void
+// gprtBufferPresent(GPRTContext _context, GPRTBuffer _buffer) {
+//   LOG_API_CALL();
+//   if (!requestedFeatures.window)
+//     return;
+//   Context *context = (Context *) _context;
+//   Buffer *buffer = (Buffer *) _buffer;
+
+//   VkPresentInfoKHR presentInfo{};
+//   presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+//   // VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+//   // submitInfo.signalSemaphoreCount = 1;
+//   // submitInfo.pSignalSemaphores = signalSemaphores;
+
+//   VkCommandBuffer commandBuffer = context->beginSingleTimeCommands(context->graphicsCommandPool);
+
+//   // transition image layout from PRESENT_SRC to TRANSFER_DST
+//   {
+//     VkImageMemoryBarrier barrier{};
+//     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+//     // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
+//     // of the original image. I'm assuming this is ok.
+//     barrier.oldLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+//     // The new layout for the image
+//     barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+//     // If we're transferring which queue owns this image, we need to set these.
+//     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+//     // specify the image that is affected and the specific parts of that image.
+//     barrier.image = context->swapchainImages[context->currentImageIndex];
+//     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     barrier.subresourceRange.baseMipLevel = 0;
+//     barrier.subresourceRange.levelCount = 1;
+//     barrier.subresourceRange.baseArrayLayer = 0;
+//     barrier.subresourceRange.layerCount = 1;
+
+//     VkPipelineStageFlags sourceStage;
+//     VkPipelineStageFlags destinationStage;
+
+//     sourceStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//     barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+//     destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+//     barrier.dstAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+//     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+//   }
+
+//   // now do the transfer
+//   {
+//     VkBufferImageCopy region{};
+//     region.bufferOffset = 0;
+//     // if 0, vulkan assumes buffer memory is tightly packed
+//     region.bufferRowLength = 0;
+//     region.bufferImageHeight = 0;
+
+//     region.imageOffset.x = 0;
+//     region.imageOffset.y = 0;
+//     region.imageOffset.z = 0;
+
+//     region.imageExtent.width = context->windowExtent.width;
+//     region.imageExtent.height = context->windowExtent.height;
+//     region.imageExtent.depth = 1;
+
+//     region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     region.imageSubresource.mipLevel = 0;
+//     region.imageSubresource.baseArrayLayer = 0;
+//     region.imageSubresource.layerCount = 1;
+
+//     vkCmdCopyBufferToImage(commandBuffer, buffer->buffer, context->swapchainImages[context->currentImageIndex],
+//                            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+//   }
+
+//   // now go from TRANSFER_DST back to PRESENT_SRC
+//   {
+//     VkImageMemoryBarrier barrier{};
+//     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+
+//     // If this layout is "VK_IMAGE_LAYOUT_UNDEFINED", we might lose the contents
+//     // of the original image. I'm assuming this is ok.
+//     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+//     // The new layout for the image
+//     barrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+//     // If we're transferring which queue owns this image, we need to set these.
+//     barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+//     barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+//     // specify the image that is affected and the specific parts of that image.
+//     barrier.image = context->swapchainImages[context->currentImageIndex];
+//     barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+//     barrier.subresourceRange.baseMipLevel = 0;
+//     barrier.subresourceRange.levelCount = 1;
+//     barrier.subresourceRange.baseArrayLayer = 0;
+//     barrier.subresourceRange.layerCount = 1;
+
+//     VkPipelineStageFlags sourceStage;
+//     VkPipelineStageFlags destinationStage;
+
+//     sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+//     barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+
+//     destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+//     barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
+//     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+//   }
+
+//   context->endSingleTimeCommands(commandBuffer, context->graphicsCommandPool, context->graphicsQueue);
+
+//   presentInfo.waitSemaphoreCount = 0;
+//   presentInfo.pWaitSemaphores = VK_NULL_HANDLE;
+
+//   VkSwapchainKHR swapchains[] = {context->swapchain};
+//   presentInfo.swapchainCount = 1;
+//   presentInfo.pSwapchains = swapchains;
+//   presentInfo.pImageIndices = &context->currentImageIndex;
+
+//   presentInfo.pResults = nullptr;
+
+//   // currently throwing an error because the images given by the swapchain don't
+//   // have a defined layout...
+//   VkResult err1 = vkQueuePresentKHR(context->graphicsQueue, &presentInfo);
+
+//   VkResult err2 = vkAcquireNextImageKHR(context->logicalDevice, context->swapchain, UINT64_MAX, VK_NULL_HANDLE,
+//                                         context->inFlightFence, &context->currentImageIndex);
+//   vkWaitForFences(context->logicalDevice, 1, &context->inFlightFence, true, UINT_MAX);
+//   vkResetFences(context->logicalDevice, 1, &context->inFlightFence);
+// }
+
+// GPRT_API void
+// gprtGuiSetRasterAttachments(GPRTContext _context, GPRTTexture _colorAttachment, GPRTTexture _depthAttachment) {
+//   Context *context = (Context *) _context;
+//   Texture *colorAttachment = (Texture *) _colorAttachment;
+//   Texture *depthAttachment = (Texture *) _depthAttachment;
+//   context->setRasterAttachments(colorAttachment, depthAttachment);
+// }
+
+// GPRT_API void
+// gprtGuiRasterize(GPRTContext _context) {
+//   Context *context = (Context *) _context;
+//   context->rasterizeGui();
+// }
 
 GPRT_API GPRTContext
 gprtContextCreate(int32_t *requestedDeviceIDs, int numRequestedDevices) {
