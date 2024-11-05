@@ -3318,7 +3318,7 @@ struct Context {
 
     // Select physical device to be used
     // Defaults to the first device unless specified by command line
-    uint32_t selectedDevice = -1;   // TODO
+    // uint32_t selectedDevice = -1;   // TODO
 
     PING;
     std::vector<uint32_t> usableDevices;
@@ -3351,6 +3351,7 @@ struct Context {
           }
         }
 
+      PING;
         for (const char *enabledExtension : enabledDeviceExtensions) {
           if (!extensionSupported(enabledExtension, supportedExtensions)) {
             LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
@@ -3358,32 +3359,48 @@ struct Context {
           }
         }
       }
+      PING;
     }
 
+    PING;
+    PRINT(usableDevices.size());
+    for (auto usable : usableDevices) PRINT(usable);
     if (usableDevices.size() == 0) {
       LOG_ERROR("Unable to find physical device meeting requirements");
-    } else {
-      uint32_t requestedDevice = 0;
-
-      if (numRequestedDevices == 0 || requestedDeviceIDs == nullptr) {
-        LOG_INFO("Selecting first usable device");
-      } else if (numRequestedDevices > 1) {
-        LOG_ERROR("Multi-GPU support not yet implemented (on the backlog)");
-      } else {
-        requestedDevice = requestedDeviceIDs[0];
-        if (requestedDevice > usableDevices.size()) {
-          LOG_ERROR("Requested device is out of range!");
-        }
-      }
-      selectedDevice = usableDevices[requestedDevice];
+      exit(0);
     }
+    // if (
+    // else {
+    //   uint32_t requestedDevice = 0;
 
+    //   if (numRequestedDevices == 0 || requestedDeviceIDs == nullptr) {
+    //     LOG_INFO("Selecting first usable device");
+    //   } else if (numRequestedDevices > 1) {
+    //     LOG_ERROR("Multi-GPU support not yet implemented (on the backlog)");
+    //   } else {
+    //     requestedDevice = requestedDeviceIDs[0];
+    //     PRINT(requestedDevice);
+    //     if (requestedDevice > usableDevices.size()) {
+    //       LOG_ERROR("Requested device is out of range!");
+    //     }
+    //   }
+      
+    //   selectedDevice = requestedDevice;//usableDevices[requestedDevice];
+    // }
+    assert(requestedDeviceIDs != 0);
+    assert(numRequestedDevices == 1);
+    uint32_t selectedDevice = requestedDeviceIDs[0];
+    PING;
+    PRINT(selectedDevice);
     physicalDevice = physicalDevices[selectedDevice];
+    PING;
+    PRINT(physicalDevice);
 
     // Store properties (including limits), features and memory properties of
     // the physical device Device properties also contain limits and sparse
     // properties
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+    PING;
 
     subgroupProperties = {};
     subgroupProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
@@ -3396,7 +3413,10 @@ struct Context {
     deviceProperties2 = {};
     deviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     deviceProperties2.pNext = &rayTracingPipelineProperties;
+    PING;
+    PRINT(physicalDevice);
     vkGetPhysicalDeviceProperties2(physicalDevice, &deviceProperties2);
+    PING;
 
     // Features should be checked by the end application before using them
     VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV invocationReorderFeatures{};
@@ -3404,6 +3424,7 @@ struct Context {
     invocationReorderFeatures.rayTracingInvocationReorder = requestedFeatures.invocationReordering;
     invocationReorderFeatures.pNext = nullptr;
 
+    PING;
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures{};
     accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
     accelerationStructureFeatures.pNext = &invocationReorderFeatures;
@@ -3415,6 +3436,7 @@ struct Context {
     VkPhysicalDeviceRayQueryFeaturesKHR rtQueryFeatures{};
     rtQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
     rtQueryFeatures.pNext = &rtPipelineFeatures;
+    PING;
 
     deviceVulkan12Features = {};
     deviceVulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
@@ -3437,13 +3459,15 @@ struct Context {
 
     // Queue family properties, used for setting up requested queues upon device
     // creation
+    PING;
     uint32_t queueFamilyCount;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     assert(queueFamilyCount > 0);
     queueFamilyProperties.resize(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
-
-    // Get list of supported extensions
+ 
+    PING;
+   // Get list of supported extensions
     uint32_t devExtCount = 0;
     vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &devExtCount, nullptr);
     if (devExtCount > 0) {
@@ -3490,6 +3514,7 @@ struct Context {
       return -1;
     };
 
+    PING;
     const float defaultQueuePriority(0.0f);
 
     // Graphics queue
@@ -3528,6 +3553,7 @@ struct Context {
     //   // Else we use the same queue
     //   queueFamilyIndices.compute = queueFamilyIndices.graphics;
     // }
+    PING;
 
     // Dedicated transfer queue
     // if (requestedQueueTypes & VK_QUEUE_TRANSFER_BIT)
