@@ -135,55 +135,55 @@ static struct RequestedFeatures {
 
 // For error handling
 namespace detail {
-inline static std::string
-backtrace() {
+  inline static std::string
+  backtrace() {
 #ifdef __GNUC__
-  static const int max_frames = 16;
+    static const int max_frames = 16;
 
-  void *buffer[max_frames] = {0};
-  int cnt = ::backtrace(buffer, max_frames);
+    void *buffer[max_frames] = {0};
+    int cnt = ::backtrace(buffer, max_frames);
 
-  char **symbols = backtrace_symbols(buffer, cnt);
+    char **symbols = backtrace_symbols(buffer, cnt);
 
-  if (symbols) {
-    std::stringstream str;
-    for (int n = 1; n < cnt; ++n)   // skip the 1st entry (address of this function)
-    {
-      str << symbols[n] << '\n';
+    if (symbols) {
+      std::stringstream str;
+      for (int n = 1; n < cnt; ++n)   // skip the 1st entry (address of this function)
+        {
+          str << symbols[n] << '\n';
+        }
+      free(symbols);
+      return str.str();
     }
-    free(symbols);
-    return str.str();
-  }
-  return "";
+    return "";
 #else
-  return "not implemented yet";
+    return "not implemented yet";
 #endif
-}
+  }
 
-inline void
-gprtRaise_impl(std::string str) {
-  fprintf(stderr, "%s\n", str.c_str());
+  inline void
+  gprtRaise_impl(std::string str) {
+    fprintf(stderr, "%s\n", str.c_str());
 #ifdef WIN32
-  if (IsDebuggerPresent())
-    DebugBreak();
-  else
-    assert(false);
+    if (IsDebuggerPresent())
+      DebugBreak();
+    else
+      assert(false);
 #else
 #ifndef NDEBUG
-  std::string bt = ::detail::backtrace();
-  fprintf(stderr, "%s\n", bt.c_str());
+    std::string bt = ::detail::backtrace();
+    fprintf(stderr, "%s\n", bt.c_str());
 #endif
-  raise(SIGINT);
+    raise(SIGINT);
 #endif
-}
+  }
 }   // namespace detail
 
 #define GPRT_RAISE(MSG) ::detail::gprtRaise_impl(MSG);
 
-#define GPRT_NOTIMPLEMENTED                                                                                            \
-  {                                                                                                                    \
-    std::cerr << std::string(__PRETTY_FUNCTION__) << " not implemented" << std::endl;                                  \
-    assert(false);                                                                                                     \
+#define GPRT_NOTIMPLEMENTED                                             \
+  {                                                                     \
+    std::cerr << std::string(__PRETTY_FUNCTION__) << " not implemented" << std::endl; \
+    assert(false);                                                      \
   };
 
 #if 1
@@ -192,35 +192,35 @@ gprtRaise_impl(std::string str) {
 #define LOG_API_CALL() std::cout << "% " << __FUNCTION__ << "(...)" << std::endl;
 #endif
 
-#define LOG_VERBOSE(message)                                                                                              \
-  if (RequestedFeatures::logging())                                                                                    \
-  std::cout << GPRT_TERMINAL_CYAN << "#gprt verbose:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
+#define LOG_VERBOSE(message)                                            \
+  if (RequestedFeatures::logging())                                     \
+    std::cout << GPRT_TERMINAL_CYAN << "#gprt verbose:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
 
-#define LOG_INFO(message)                                                                                              \
-  if (RequestedFeatures::logging())                                                                                    \
-  std::cout << GPRT_TERMINAL_LIGHT_BLUE << "#gprt info:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
+#define LOG_INFO(message)                                               \
+  if (RequestedFeatures::logging())                                     \
+    std::cout << GPRT_TERMINAL_LIGHT_BLUE << "#gprt info:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
 
-#define LOG_PRINTF(message)                                                                                              \
-  if (RequestedFeatures::logging())                                                                                    \
-  std::cout << GPRT_TERMINAL_GREEN << message << GPRT_TERMINAL_DEFAULT;
+#define LOG_PRINTF(message)                                             \
+  if (RequestedFeatures::logging())                                     \
+    std::cout << GPRT_TERMINAL_GREEN << message << GPRT_TERMINAL_DEFAULT;
 
-#define LOG_WARNING(message)                                                                                           \
-  if (RequestedFeatures::logging())                                                                                    \
-  std::cout << GPRT_TERMINAL_YELLOW << "#gprt warn:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
+#define LOG_WARNING(message)                                            \
+  if (RequestedFeatures::logging())                                     \
+    std::cout << GPRT_TERMINAL_YELLOW << "#gprt warn:  " << message << GPRT_TERMINAL_DEFAULT << std::endl
 
-#define LOG_ERROR(message)                                                                                             \
-  {                                                                                                                    \
-    if (RequestedFeatures::logging())                                                                                  \
-      std::cout << GPRT_TERMINAL_RED << "#gprt error: " << message << GPRT_TERMINAL_DEFAULT << std::endl;              \
-    GPRT_RAISE(message)                                                                                                \
-  }
+#define LOG_ERROR(message)                                              \
+  {                                                                     \
+    if (RequestedFeatures::logging())                                   \
+      std::cout << GPRT_TERMINAL_RED << "#gprt error: " << message << GPRT_TERMINAL_DEFAULT << std::endl; \
+    GPRT_RAISE(message)                                                 \
+      }
 
 std::string
 errorString(VkResult errorCode) {
   switch (errorCode) {
-#define STR(r)                                                                                                         \
-  case VK_##r:                                                                                                         \
-    return #r
+#define STR(r)                                  \
+    case VK_##r:                                \
+      return #r
     STR(NOT_READY);
     STR(TIMEOUT);
     STR(EVENT_SET);
@@ -251,14 +251,14 @@ errorString(VkResult errorCode) {
   }
 }
 
-#define VK_CHECK_RESULT(f)                                                                                             \
-  {                                                                                                                    \
-    VkResult res = (f);                                                                                                \
-    if (res != VK_SUCCESS) {                                                                                           \
-      std::cout << "Fatal : VkResult is \"" << errorString(res) << "\" in " << __FILE__ << " at line " << __LINE__     \
-                << "\n";                                                                                               \
-      assert(res == VK_SUCCESS);                                                                                       \
-    }                                                                                                                  \
+#define VK_CHECK_RESULT(f)                                              \
+  {                                                                     \
+    VkResult res = (f);                                                 \
+    if (res != VK_SUCCESS) {                                            \
+      std::cout << "Fatal : VkResult is \"" << errorString(res) << "\" in " << __FILE__ << " at line " << __LINE__ \
+                << "\n";                                                \
+      assert(res == VK_SUCCESS);                                        \
+    }                                                                   \
   }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL
@@ -312,28 +312,28 @@ struct NNTriangleGeom;
 struct NNTriangleGeomType;
 
 namespace gprt {
-PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddress;
-PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructure;
-PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructure;
-PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizes;
-PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddress;
-PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructures;
-PFN_vkCmdCopyAccelerationStructureKHR vkCmdCopyAccelerationStructure;
-PFN_vkBuildAccelerationStructuresKHR vkBuildAccelerationStructures;
-PFN_vkCopyAccelerationStructureKHR vkCopyAccelerationStructure;
-PFN_vkCmdTraceRaysKHR vkCmdTraceRays;
-PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandles;
-PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelines;
-PFN_vkCmdWriteAccelerationStructuresPropertiesKHR vkCmdWriteAccelerationStructuresProperties;
+  PFN_vkGetBufferDeviceAddressKHR vkGetBufferDeviceAddress;
+  PFN_vkCreateAccelerationStructureKHR vkCreateAccelerationStructure;
+  PFN_vkDestroyAccelerationStructureKHR vkDestroyAccelerationStructure;
+  PFN_vkGetAccelerationStructureBuildSizesKHR vkGetAccelerationStructureBuildSizes;
+  PFN_vkGetAccelerationStructureDeviceAddressKHR vkGetAccelerationStructureDeviceAddress;
+  PFN_vkCmdBuildAccelerationStructuresKHR vkCmdBuildAccelerationStructures;
+  PFN_vkCmdCopyAccelerationStructureKHR vkCmdCopyAccelerationStructure;
+  PFN_vkBuildAccelerationStructuresKHR vkBuildAccelerationStructures;
+  PFN_vkCopyAccelerationStructureKHR vkCopyAccelerationStructure;
+  PFN_vkCmdTraceRaysKHR vkCmdTraceRays;
+  PFN_vkGetRayTracingShaderGroupHandlesKHR vkGetRayTracingShaderGroupHandles;
+  PFN_vkCreateRayTracingPipelinesKHR vkCreateRayTracingPipelines;
+  PFN_vkCmdWriteAccelerationStructuresPropertiesKHR vkCmdWriteAccelerationStructuresProperties;
 
-PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
-PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
-VkDebugUtilsMessengerEXT debugUtilsMessenger;
+  PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT;
+  PFN_vkDestroyDebugUtilsMessengerEXT vkDestroyDebugUtilsMessengerEXT;
+  VkDebugUtilsMessengerEXT debugUtilsMessenger;
 
-// Note, the following were deprecated and shouldn't be used
-// PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
-// PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
-// VkDebugReportCallbackEXT debugReportCallback;
+  // Note, the following were deprecated and shouldn't be used
+  // PFN_vkCreateDebugReportCallbackEXT vkCreateDebugReportCallbackEXT;
+  // PFN_vkDestroyDebugReportCallbackEXT vkDestroyDebugReportCallbackEXT;
+  // VkDebugReportCallbackEXT debugReportCallback;
 }   // namespace gprt
 
 struct Stage {
@@ -907,11 +907,11 @@ struct Buffer {
 
     if (!hostVisible) {
       const VkBufferUsageFlags bufferUsageFlags =
-          // means we can use this buffer to transfer into another
-          VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          // means we can use this buffer to receive data transferred from
-          // another
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        // means we can use this buffer to transfer into another
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+        // means we can use this buffer to receive data transferred from
+        // another
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
       VkBufferCreateInfo bufferCreateInfo{};
       bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1112,7 +1112,7 @@ struct Texture {
       // Image layout will be used as a depth/stencil attachment
       // Make sure any writes to depth/stencil buffer have been finished
       imageMemoryBarrier.dstAccessMask =
-          imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+        imageMemoryBarrier.dstAccessMask | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
       break;
 
     case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL:
@@ -1484,9 +1484,9 @@ struct Texture {
           uint32_t _width, uint32_t _height, uint32_t _depth, bool allocateMipmap, const void *data = nullptr) {
 
     std::vector<Texture *> &textures = (type == VK_IMAGE_TYPE_1D)   ? texture1Ds
-                                       : (type == VK_IMAGE_TYPE_2D) ? texture2Ds
-                                                                    :
-                                                                    /*(type == VK_IMAGE_TYPE_3D) ?*/ texture3Ds;
+      : (type == VK_IMAGE_TYPE_2D) ? texture2Ds
+      :
+      /*(type == VK_IMAGE_TYPE_3D) ?*/ texture3Ds;
 
     // Hunt for an existing free address for this texture
     for (uint32_t i = 0; i < textures.size(); ++i) {
@@ -1613,11 +1613,11 @@ struct Texture {
 
     if (!hostVisible) {
       const VkBufferUsageFlags bufferUsageFlags =
-          // means we can use this buffer to transfer into another
-          VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          // means we can use this buffer to receive data transferred from
-          // another
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        // means we can use this buffer to transfer into another
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+        // means we can use this buffer to receive data transferred from
+        // another
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT;
 
       VkBufferCreateInfo bufferCreateInfo{};
       bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1643,10 +1643,10 @@ struct Texture {
 
     if (!hostVisible) {
       const VkMemoryPropertyFlags memoryPropertyFlags =
-          VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with
-                                                  // vkMapMemory
-          VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and
-                                                  // "invalidate"  not needed
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with
+        // vkMapMemory
+        VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and
+      // "invalidate"  not needed
 
       // Create the memory backing up the staging buffer handle
       VkMemoryRequirements memReqs;
@@ -1740,10 +1740,10 @@ struct Texture {
   void destroy() {
     // Free texture slot for use by subsequently made textures
     std::vector<Texture *> &textures = (imageType == VK_IMAGE_TYPE_1D) ? texture1Ds
-                                       : (imageType == VK_IMAGE_TYPE_2D)
-                                           ? texture2Ds
-                                           :
-                                           /*(imageType == VK_IMAGE_TYPE_3D) ?*/ texture3Ds;
+      : (imageType == VK_IMAGE_TYPE_2D)
+      ? texture2Ds
+      :
+      /*(imageType == VK_IMAGE_TYPE_3D) ?*/ texture3Ds;
 
     textures[address] = nullptr;
 
@@ -2176,10 +2176,10 @@ struct Callable : public SBTEntry {
 std::vector<Callable *> Callable::callables;
 
 /* An abstraction for any sort of geometry type - describes the
-    programs to use, and structure of the SBT records, when building
-    shader binding tables (SBTs) with geometries of this type. This
-    will later get subclassed into triangle geometries, user/custom
-    primitive geometry types, etc */
+   programs to use, and structure of the SBT records, when building
+   shader binding tables (SBTs) with geometries of this type. This
+   will later get subclassed into triangle geometries, user/custom
+   primitive geometry types, etc */
 struct GeomType : public SBTEntry {
 
   // Our own virtual "geom types address space".
@@ -2438,10 +2438,10 @@ struct GeomType : public SBTEntry {
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
     dependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.srcAccessMask = 0;
     dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
     VkRenderPassCreateInfo createInfo{};
@@ -2578,7 +2578,7 @@ struct GeomType : public SBTEntry {
     // compositing configuration
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask =
-        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+      VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_TRUE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;                   // Optional
     colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;   // Optional
@@ -2740,7 +2740,7 @@ struct Geom : public SBTEntry {
   }
 
   /*! This acts as a template that describes this geometry's variables and
-      programs. */
+    programs. */
   GeomType *geomType;
 };
 
@@ -2790,7 +2790,7 @@ struct TriangleGeom : public Geom {
 
 struct TriangleGeomType : public GeomType {
   TriangleGeomType(VkDevice logicalDevice, uint32_t numRayTypes, size_t recordSize)
-      : GeomType(logicalDevice, numRayTypes, recordSize) {}
+    : GeomType(logicalDevice, numRayTypes, recordSize) {}
   ~TriangleGeomType() {}
 
   Geom *createGeom() { return new TriangleGeom(this); }
@@ -2827,7 +2827,7 @@ struct AABBGeom : public Geom {
 
 struct AABBGeomType : public GeomType {
   AABBGeomType(VkDevice _logicalDevice, uint32_t numRayTypes, size_t recordSize)
-      : GeomType(_logicalDevice, numRayTypes, recordSize) {}
+    : GeomType(_logicalDevice, numRayTypes, recordSize) {}
   ~AABBGeomType() {}
   Geom *createGeom() { return new AABBGeom(this); }
 
@@ -2836,6 +2836,285 @@ struct AABBGeomType : public GeomType {
 
 struct Accel;
 
+
+  std::vector<VkPhysicalDevice> getUsableDevices()
+  {
+    static std::vector<VkPhysicalDevice> usableDevices;
+    static bool alreadyQueried = false;
+    if (alreadyQueried) return usableDevices;
+    alreadyQueried = true;
+  
+    static VkInstance instance;
+    static VkApplicationInfo appInfo;
+    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+    appInfo.pApplicationName = "GPRT";
+    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.pEngineName = "GPRT";
+    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+    appInfo.apiVersion = VK_API_VERSION_1_2;
+    appInfo.pNext = VK_NULL_HANDLE;
+
+    /// 1. Create Instance
+    std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+#endif
+
+    // Get extensions supported by the instance and store for later use
+    uint32_t instExtCount = 0;
+    std::vector<std::string> supportedInstanceExtensions;
+    std::vector<const char *> enabledDeviceExtensions;
+    std::vector<const char *> enabledInstanceExtensions;
+    vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
+    if (instExtCount > 0) {
+      std::vector<VkExtensionProperties> extensions(instExtCount);
+      if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
+        for (VkExtensionProperties extension : extensions) {
+          supportedInstanceExtensions.push_back(extension.extensionName);
+        }
+      }
+    }
+
+    // Enabled requested instance extensions
+    if (enabledInstanceExtensions.size() > 0) {
+      for (const char *enabledExtension : enabledInstanceExtensions) {
+        // Output message if requested extension is not available
+        if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
+            supportedInstanceExtensions.end()) {
+          std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
+        }
+        instanceExtensions.push_back(enabledExtension);
+      }
+    }
+
+    VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+    VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+    validationFeatures.disabledValidationFeatureCount = 0;
+    validationFeatures.enabledValidationFeatureCount = 1;
+    validationFeatures.pDisabledValidationFeatures = nullptr;
+    validationFeatures.pEnabledValidationFeatures = enabled;
+
+    VkInstanceCreateInfo instanceCreateInfo{};
+    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    instanceCreateInfo.pApplicationInfo = &appInfo;
+    // instanceCreateInfo.pNext = VK_NULL_HANDLE;
+
+    if (requestedFeatures.debugPrintf) {
+      instanceCreateInfo.pNext = &validationFeatures;
+    } else {
+      LOG_WARNING("Debug printf disabled");
+      instanceCreateInfo.pNext = VK_NULL_HANDLE;
+    }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
+    // Useful to disable, since some profiling tools don't support this.
+    if (requestedFeatures.debugPrintf) {
+      instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    if (instanceExtensions.size() > 0) {
+      instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
+      instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+    }
+
+    
+    // need this for printf to work
+    const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
+    instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
+    instanceCreateInfo.enabledLayerCount = 1;
+
+    VkResult err;
+
+    err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+    if (err) {
+      LOG_ERROR("failed to create instance! : \n" + errorString(err));
+    }
+
+    // Setup debug printf callback
+    if (requestedFeatures.debugPrintf) {
+      gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+                                                                                                  vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+      gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+                                                                                                    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+
+      VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
+      debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+      debugUtilsMessengerCI.messageSeverity = 
+        // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
+        // | VK_DEBUG_REPORT_WARNING_BIT_EXT
+        // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
+        // | VK_DEBUG_REPORT_ERROR_BIT_EXT
+        VK_DEBUG_REPORT_DEBUG_BIT_EXT
+        ;
+      debugUtilsMessengerCI.messageType =
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+      debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
+      VkResult result =
+        gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+      assert(result == VK_SUCCESS);
+    }
+
+    /// 2. Select a Physical Device
+    
+    // Physical device
+    uint32_t gpuCount = 0;
+    // Get number of available physical devices
+    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
+    if (gpuCount == 0) {
+      LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
+    }
+    // Enumerate devices
+    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+    err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
+    if (err) {
+      LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
+    }
+
+    // GPU selection
+
+    auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
+      switch (type) {
+#define STR(r)                                  \
+        case VK_PHYSICAL_DEVICE_TYPE_##r:       \
+          return #r
+        STR(OTHER);
+        STR(INTEGRATED_GPU);
+        STR(DISCRETE_GPU);
+        STR(VIRTUAL_GPU);
+        STR(CPU);
+#undef STR
+      default:
+        return "UNKNOWN_DEVICE_TYPE";
+      }
+    };
+
+    auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
+      return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
+              supportedExtensions.end());
+    };
+
+    /* function that checks if the selected physical device meets requirements
+     */
+    auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
+      uint32_t extensionCount;
+      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+      std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+      std::set<std::string> requiredExtensions;
+      for (auto &cstr : deviceExtensions) {
+        requiredExtensions.insert(std::string(cstr));
+      }
+
+      for (const auto &extension : availableExtensions) {
+        requiredExtensions.erase(extension.extensionName);
+      }
+
+      return requiredExtensions.empty();
+    };
+
+    // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
+    // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
+    // components, without additional requirements.
+    enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
+
+    // Ray tracing related extensions required
+    enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+
+    // Ray tracing related extensions required
+    enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+    // Required by VK_KHR_acceleration_structure
+    enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+    enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+    enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
+    // Required for VK_KHR_ray_tracing_pipeline
+    enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+    
+    // required for vulkan memory model stuff
+    enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
+
+    // Required by VK_KHR_spirv_1_4
+    enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+
+    // if (requestedFeatures.window) {
+    //   // If the device will be used for presenting to a display via a swapchain
+    //   // we need to request the swapchain extension
+    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    // }
+
+    if (requestedFeatures.rayQueries) {
+      // If the device will be using ray queries for inline ray tracing,
+      // we need to explicitly request this.
+      enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+    }
+
+    if (requestedFeatures.invocationReordering) {
+      enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+    }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+    enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
+
+    // Select physical device to be used
+    // Defaults to the first device unless specified by command line
+    // uint32_t selectedDevice = -1;   // TODO
+
+    // std::vector<uint32_t> usableDevices;
+    // uint32_t *usableDevices 
+    int numUsableFound = 0;
+    LOG_INFO("Searching for usable Vulkan physical device...");
+    for (uint32_t i = 0; i < gpuCount; i++) {
+      VkPhysicalDeviceProperties deviceProperties;
+      vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
+      std::string message =
+        std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
+      message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
+      message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
+        std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
+        std::to_string(deviceProperties.apiVersion & 0xfff);
+      LOG_INFO(message);
+
+      if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
+        // usableDevices[numUsableFound++] = i;
+        usableDevices.push_back(physicalDevices[i]);
+        // usableDevices.push_back(i);
+        LOG_INFO("\tFound usable device");
+        // } else {
+        //   // Get list of supported extensions
+        //   uint32_t devExtCount = 0;
+        //   vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
+        //   std::vector<VkExtensionProperties> extensions(devExtCount);
+        //   std::vector<std::string> supportedExtensions;
+        //   if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
+        //       VK_SUCCESS) {
+        //     for (auto ext : extensions) {
+        //       supportedExtensions.push_back(ext.extensionName);
+        //     }
+        //   }
+
+        //   for (const char *enabledExtension : enabledDeviceExtensions) {
+        //     if (!extensionSupported(enabledExtension, supportedExtensions)) {
+        //       LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
+        //                   << "\" is not present.");
+        //     }
+        //   }
+      }
+    }
+    return usableDevices;
+  }
+
+  
 struct Context {
   // For convenience, an opaque handle to the context
   GPRTContext context = (GPRTContext)this;
@@ -2934,7 +3213,7 @@ struct Context {
 
   /** @brief Pipeline stages used to wait at for graphics queue submissions */
   VkPipelineStageFlags submitPipelineStages =
-      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;   // not sure I need this one
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;   // not sure I need this one
   // Contains command buffers and semaphores to be presented to the queue
   VkSubmitInfo submitInfo{};
   // Command buffers used for rendering
@@ -3061,339 +3340,16 @@ struct Context {
   size_t getNumHitRecords();
 
 
-  Context(int32_t *requestedDeviceIDs, int numRequestedDevices) {
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GPRT";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "GPRT";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
-    appInfo.pNext = VK_NULL_HANDLE;
-
-    /// 1. Create Instance
-    std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-#endif
-
-    // Get extensions supported by the instance and store for later use
-    uint32_t instExtCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
-    if (instExtCount > 0) {
-      std::vector<VkExtensionProperties> extensions(instExtCount);
-      if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
-        for (VkExtensionProperties extension : extensions) {
-          supportedInstanceExtensions.push_back(extension.extensionName);
-        }
-      }
-    }
-
-    // Enabled requested instance extensions
-    if (enabledInstanceExtensions.size() > 0) {
-      for (const char *enabledExtension : enabledInstanceExtensions) {
-        // Output message if requested extension is not available
-        if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
-            supportedInstanceExtensions.end()) {
-          std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
-        }
-        instanceExtensions.push_back(enabledExtension);
-      }
-    }
-
-    VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
-    VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-    validationFeatures.disabledValidationFeatureCount = 0;
-    validationFeatures.enabledValidationFeatureCount = 1;
-    validationFeatures.pDisabledValidationFeatures = nullptr;
-    validationFeatures.pEnabledValidationFeatures = enabled;
-
-    VkInstanceCreateInfo instanceCreateInfo{};
-    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceCreateInfo.pApplicationInfo = &appInfo;
-    // instanceCreateInfo.pNext = VK_NULL_HANDLE;
-
-    if (requestedFeatures.debugPrintf) {
-      instanceCreateInfo.pNext = &validationFeatures;
-    } else {
-      LOG_WARNING("Debug printf disabled");
-      instanceCreateInfo.pNext = VK_NULL_HANDLE;
-    }
 
 
-    // PING;
-    // uint32_t glfwExtensionCount = 0;
-    // const char **glfwExtensions;
-    // if (requestedFeatures.window) {
-    //   if (!glfwInit()) {
-    //     LOG_WARNING("Unable to create window. Falling back to headless mode.");
-    //     requestedFeatures.window = false;
-    //   } else {
-    //     if (!glfwVulkanSupported()) {
-    //       LOG_ERROR("Window requested but unsupported!");
-    //     }
-    //     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    //     for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
-    //       instanceExtensions.push_back(glfwExtensions[i]);
-    //     }
-    //   }
-    // }
-
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
-
-    // Useful to disable, since some profiling tools don't support this.
-    if (requestedFeatures.debugPrintf) {
-      instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-
-    if (instanceExtensions.size() > 0) {
-      instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
-      instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
-    }
-
+  Context(int32_t requestedDeviceID)
+  {
+    std::vector<VkPhysicalDevice> usableDevices
+      = getUsableDevices();
+    if (requestedDeviceID < 0 || requestedDeviceID >= usableDevices.size())
+      throw std::runtime_error("invalid device ID");
     
-    // need this for printf to work
-    const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
-    instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
-    instanceCreateInfo.enabledLayerCount = 1;
-
-    VkResult err;
-
-    err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-    if (err) {
-      LOG_ERROR("failed to create instance! : \n" + errorString(err));
-    }
-
-    // /// 1.5 - create a window and surface if requested
-    // if (requestedFeatures.window) {
-    // PING;
-    //   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    //   // todo, allow the window to resize and recreate swapchain
-    //   glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-    //   window = glfwCreateWindow(requestedFeatures.windowProperties.initialWidth,
-    //                             requestedFeatures.windowProperties.initialHeight,
-    //                             requestedFeatures.windowProperties.title.c_str(), NULL, NULL);
-
-    //   VkResult err = glfwCreateWindowSurface(instance, window, nullptr, &surface);
-    //   if (err != VK_SUCCESS) {
-    //     LOG_ERROR("failed to create window surface! : \n" + errorString(err));
-    //   }
-    //   // Poll some initial event values
-    //   glfwPollEvents();
-    // }
-
-    // Setup debug printf callback
-    if (requestedFeatures.debugPrintf) {
-      gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-          vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
-      gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-          vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
-
-      VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
-      debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-      debugUtilsMessengerCI.messageSeverity = 
-          // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
-        // | VK_DEBUG_REPORT_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_ERROR_BIT_EXT
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT
-        ;
-      debugUtilsMessengerCI.messageType =
-          VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-      debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
-      VkResult result =
-          gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
-      assert(result == VK_SUCCESS);
-    }
-
-    /// 2. Select a Physical Device
-    
-    // Physical device
-    uint32_t gpuCount = 0;
-    // Get number of available physical devices
-    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
-    if (gpuCount == 0) {
-      LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
-    }
-    // Enumerate devices
-    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
-    err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
-    if (err) {
-      LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
-    }
-
-    // GPU selection
-
-    auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
-      switch (type) {
-#define STR(r)                                                                                                         \
-  case VK_PHYSICAL_DEVICE_TYPE_##r:                                                                                    \
-    return #r
-        STR(OTHER);
-        STR(INTEGRATED_GPU);
-        STR(DISCRETE_GPU);
-        STR(VIRTUAL_GPU);
-        STR(CPU);
-#undef STR
-      default:
-        return "UNKNOWN_DEVICE_TYPE";
-      }
-    };
-
-    auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
-      return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
-              supportedExtensions.end());
-    };
-
-    /* function that checks if the selected physical device meets requirements
-     */
-    auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
-      uint32_t extensionCount;
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-      std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-      std::set<std::string> requiredExtensions;
-      for (auto &cstr : deviceExtensions) {
-        requiredExtensions.insert(std::string(cstr));
-      }
-
-      for (const auto &extension : availableExtensions) {
-        requiredExtensions.erase(extension.extensionName);
-      }
-
-      return requiredExtensions.empty();
-    };
-
-    // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
-    // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
-    // components, without additional requirements.
-    enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
-
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-
-    // Required by VK_KHR_acceleration_structure
-    enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
-
-    // Required for VK_KHR_ray_tracing_pipeline
-    enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-    
-    // required for vulkan memory model stuff
-    enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
-
-    // Required by VK_KHR_spirv_1_4
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-
-    // if (requestedFeatures.window) {
-    //   // If the device will be used for presenting to a display via a swapchain
-    //   // we need to request the swapchain extension
-    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    // }
-
-    if (requestedFeatures.rayQueries) {
-      // If the device will be using ray queries for inline ray tracing,
-      // we need to explicitly request this.
-      enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-    }
-
-    if (requestedFeatures.invocationReordering) {
-      enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
-    }
-
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-#endif
-
-    // Select physical device to be used
-    // Defaults to the first device unless specified by command line
-    // uint32_t selectedDevice = -1;   // TODO
-
-    PING;
-    std::vector<uint32_t> usableDevices;
-
-    LOG_INFO("Searching for usable Vulkan physical device...");
-    for (uint32_t i = 0; i < gpuCount; i++) {
-      VkPhysicalDeviceProperties deviceProperties;
-      vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
-      std::string message =
-          std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
-      message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
-      message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
-                 std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
-                 std::to_string(deviceProperties.apiVersion & 0xfff);
-      LOG_INFO(message);
-
-      if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
-        usableDevices.push_back(i);
-        LOG_INFO("\tFound usable device");
-      } else {
-        // Get list of supported extensions
-        uint32_t devExtCount = 0;
-        vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(devExtCount);
-        std::vector<std::string> supportedExtensions;
-        if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
-            VK_SUCCESS) {
-          for (auto ext : extensions) {
-            supportedExtensions.push_back(ext.extensionName);
-          }
-        }
-
-      PING;
-        for (const char *enabledExtension : enabledDeviceExtensions) {
-          if (!extensionSupported(enabledExtension, supportedExtensions)) {
-            LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
-                                                                             << "\" is not present.");
-          }
-        }
-      }
-      PING;
-    }
-
-    PING;
-    PRINT(usableDevices.size());
-    for (auto usable : usableDevices) PRINT(usable);
-    if (usableDevices.size() == 0) {
-      LOG_ERROR("Unable to find physical device meeting requirements");
-      exit(0);
-    }
-    // if (
-    // else {
-    //   uint32_t requestedDevice = 0;
-
-    //   if (numRequestedDevices == 0 || requestedDeviceIDs == nullptr) {
-    //     LOG_INFO("Selecting first usable device");
-    //   } else if (numRequestedDevices > 1) {
-    //     LOG_ERROR("Multi-GPU support not yet implemented (on the backlog)");
-    //   } else {
-    //     requestedDevice = requestedDeviceIDs[0];
-    //     PRINT(requestedDevice);
-    //     if (requestedDevice > usableDevices.size()) {
-    //       LOG_ERROR("Requested device is out of range!");
-    //     }
-    //   }
-      
-    //   selectedDevice = requestedDevice;//usableDevices[requestedDevice];
-    // }
-    assert(requestedDeviceIDs != 0);
-    assert(numRequestedDevices == 1);
-    uint32_t selectedDevice = requestedDeviceIDs[0];
-    PING;
-    PRINT(selectedDevice);
-    physicalDevice = physicalDevices[selectedDevice];
-    PING;
+    physicalDevice = usableDevices[requestedDeviceID];
     PRINT(physicalDevice);
 
     // Store properties (including limits), features and memory properties of
@@ -3467,7 +3423,7 @@ struct Context {
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
  
     PING;
-   // Get list of supported extensions
+    // Get list of supported extensions
     uint32_t devExtCount = 0;
     vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &devExtCount, nullptr);
     if (devExtCount > 0) {
@@ -3612,6 +3568,7 @@ struct Context {
     }
 
     // this->enabledFeatures = enabledFeatures;
+    VkResult err;
     err = vkCreateDevice(physicalDevice, &deviceCreateInfo, nullptr, &logicalDevice);
     if (err) {
       LOG_ERROR("Could not create logical devices : \n" + errorString(err));
@@ -3638,36 +3595,36 @@ struct Context {
     // Get the ray tracing and acceleration structure related function pointers
     // required by this sample
     gprt::vkGetBufferDeviceAddress = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkGetBufferDeviceAddressKHR"));
+                                                                                       vkGetDeviceProcAddr(logicalDevice, "vkGetBufferDeviceAddressKHR"));
     gprt::vkCmdBuildAccelerationStructures = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkCmdBuildAccelerationStructuresKHR"));
+                                                                                                       vkGetDeviceProcAddr(logicalDevice, "vkCmdBuildAccelerationStructuresKHR"));
     gprt::vkCmdCopyAccelerationStructure = reinterpret_cast<PFN_vkCmdCopyAccelerationStructureKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkCmdCopyAccelerationStructureKHR"));
+                                                                                                   vkGetDeviceProcAddr(logicalDevice, "vkCmdCopyAccelerationStructureKHR"));
     gprt::vkBuildAccelerationStructures = reinterpret_cast<PFN_vkBuildAccelerationStructuresKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkBuildAccelerationStructuresKHR"));
+                                                                                                 vkGetDeviceProcAddr(logicalDevice, "vkBuildAccelerationStructuresKHR"));
     gprt::vkCopyAccelerationStructure = reinterpret_cast<PFN_vkCopyAccelerationStructureKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkCopyAccelerationStructureKHR"));
+                                                                                             vkGetDeviceProcAddr(logicalDevice, "vkCopyAccelerationStructureKHR"));
     gprt::vkCreateAccelerationStructure = reinterpret_cast<PFN_vkCreateAccelerationStructureKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkCreateAccelerationStructureKHR"));
+                                                                                                 vkGetDeviceProcAddr(logicalDevice, "vkCreateAccelerationStructureKHR"));
     gprt::vkDestroyAccelerationStructure = reinterpret_cast<PFN_vkDestroyAccelerationStructureKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkDestroyAccelerationStructureKHR"));
+                                                                                                   vkGetDeviceProcAddr(logicalDevice, "vkDestroyAccelerationStructureKHR"));
     gprt::vkGetAccelerationStructureBuildSizes = reinterpret_cast<PFN_vkGetAccelerationStructureBuildSizesKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkGetAccelerationStructureBuildSizesKHR"));
+                                                                                                               vkGetDeviceProcAddr(logicalDevice, "vkGetAccelerationStructureBuildSizesKHR"));
     gprt::vkGetAccelerationStructureDeviceAddress = reinterpret_cast<PFN_vkGetAccelerationStructureDeviceAddressKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkGetAccelerationStructureDeviceAddressKHR"));
+                                                                                                                     vkGetDeviceProcAddr(logicalDevice, "vkGetAccelerationStructureDeviceAddressKHR"));
     gprt::vkCmdTraceRays =
-        reinterpret_cast<PFN_vkCmdTraceRaysKHR>(vkGetDeviceProcAddr(logicalDevice, "vkCmdTraceRaysKHR"));
+      reinterpret_cast<PFN_vkCmdTraceRaysKHR>(vkGetDeviceProcAddr(logicalDevice, "vkCmdTraceRaysKHR"));
     gprt::vkGetRayTracingShaderGroupHandles = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkGetRayTracingShaderGroupHandlesKHR"));
+                                                                                                         vkGetDeviceProcAddr(logicalDevice, "vkGetRayTracingShaderGroupHandlesKHR"));
     gprt::vkCreateRayTracingPipelines = reinterpret_cast<PFN_vkCreateRayTracingPipelinesKHR>(
-        vkGetDeviceProcAddr(logicalDevice, "vkCreateRayTracingPipelinesKHR"));
+                                                                                             vkGetDeviceProcAddr(logicalDevice, "vkCreateRayTracingPipelinesKHR"));
     gprt::vkCmdWriteAccelerationStructuresProperties =
-        reinterpret_cast<PFN_vkCmdWriteAccelerationStructuresPropertiesKHR>(
-            vkGetDeviceProcAddr(logicalDevice, "vkCmdWriteAccelerationStructuresPropertiesKHR"));
+      reinterpret_cast<PFN_vkCmdWriteAccelerationStructuresPropertiesKHR>(
+                                                                          vkGetDeviceProcAddr(logicalDevice, "vkCmdWriteAccelerationStructuresPropertiesKHR"));
 
     auto createCommandPool = [&](uint32_t queueFamilyIndex,
                                  VkCommandPoolCreateFlags createFlags =
-                                     VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT) -> VkCommandPool {
+                                 VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT) -> VkCommandPool {
       VkCommandPoolCreateInfo cmdPoolInfo = {};
       cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
       cmdPoolInfo.queueFamilyIndex = queueFamilyIndex;
@@ -3872,39 +3829,39 @@ struct Context {
     // For texture / sampler arrays, we need some defaults
     {
       const VkImageUsageFlags imageUsageFlags =
-          // means we can make an image view required to assign this image to a
-          // descriptor
-          VK_IMAGE_USAGE_SAMPLED_BIT |
-          // means we can use this image to transfer into another
-          VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-          // means we can use this image to receive data transferred from
-          // another
-          VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+        // means we can make an image view required to assign this image to a
+        // descriptor
+        VK_IMAGE_USAGE_SAMPLED_BIT |
+        // means we can use this image to transfer into another
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+        // means we can use this image to receive data transferred from
+        // another
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT;
       const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;   // means most efficient for
                                                                                             // device access
 
       defaultSampler =
-          new Sampler(physicalDevice, logicalDevice, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_MIPMAP_MODE_LINEAR,
-                      1, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK);
+        new Sampler(physicalDevice, logicalDevice, VK_FILTER_LINEAR, VK_FILTER_LINEAR, VK_SAMPLER_MIPMAP_MODE_LINEAR,
+                    1, VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE, VK_BORDER_COLOR_FLOAT_OPAQUE_BLACK);
       defaultTexture1D =
-          new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
-                      memoryUsageFlags, VK_IMAGE_TYPE_1D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
+        new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
+                    memoryUsageFlags, VK_IMAGE_TYPE_1D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
       defaultTexture2D =
-          new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
-                      memoryUsageFlags, VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
+        new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
+                    memoryUsageFlags, VK_IMAGE_TYPE_2D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
       defaultTexture3D =
-          new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
-                      memoryUsageFlags, VK_IMAGE_TYPE_3D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
+        new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
+                    memoryUsageFlags, VK_IMAGE_TYPE_3D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
 
       const VkBufferUsageFlags bufferUsageFlags =
-          // means we can get this buffer's address with vkGetBufferDeviceAddress
-          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-          // means we can use this buffer to transfer into another
-          VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-          // means we can use this buffer to receive data transferred from another
-          VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-          // means we can use this buffer as a storage buffer resource
-          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+        // means we can get this buffer's address with vkGetBufferDeviceAddress
+        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+        // means we can use this buffer to transfer into another
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+        // means we can use this buffer to receive data transferred from another
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+        // means we can use this buffer as a storage buffer resource
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
       defaultBuffer = new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue,
                                  bufferUsageFlags, memoryUsageFlags, 1, 16);
     }
@@ -3978,7 +3935,7 @@ struct Context {
       descriptorPoolInfo.maxSets = poolSize.descriptorCount;
       descriptorPoolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
       VK_CHECK_RESULT(
-          vkCreateDescriptorPool(logicalDevice, &descriptorPoolInfo, nullptr, &computeRecordDescriptorPool));
+                      vkCreateDescriptorPool(logicalDevice, &descriptorPoolInfo, nullptr, &computeRecordDescriptorPool));
 
       VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
       descriptorSetAllocateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -4402,21 +4359,21 @@ struct Context {
 
       // Create binding for Radix sort passes
       VkDescriptorSetLayoutBinding layout_bindings_set_InputOutputs[] = {
-          {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // SrcBuffer (sort)
-          {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // DstBuffer (sort)
-          {2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScrPayload (sort only)
-          {3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // DstPayload (sort only)
+        {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // SrcBuffer (sort)
+        {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // DstBuffer (sort)
+        {2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScrPayload (sort only)
+        {3, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // DstPayload (sort only)
       };
 
       VkDescriptorSetLayoutBinding layout_bindings_set_Scan[] = {
-          {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanSrc
-          {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanDst
-          {2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanScratch
+        {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanSrc
+        {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanDst
+        {2, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // ScanScratch
       };
 
       VkDescriptorSetLayoutBinding layout_bindings_set_Scratch[] = {
-          {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // Scratch (sort only)
-          {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // Scratch (reduced)
+        {0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // Scratch (sort only)
+        {1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_ALL, nullptr},   // Scratch (reduced)
       };
 
       auto AllocDescriptor = [&](VkDescriptorPool pool, VkDescriptorSetLayout layout, VkDescriptorSet *descriptorSet) {
@@ -4435,13 +4392,13 @@ struct Context {
       VkResult vkResult;
 
       VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
-          VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
+        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
       descriptor_set_layout_create_info.pNext = nullptr;
       descriptor_set_layout_create_info.flags = 0;
       descriptor_set_layout_create_info.pBindings = layout_bindings_set_InputOutputs;
       descriptor_set_layout_create_info.bindingCount = 4;
       vkResult = vkCreateDescriptorSetLayout(logicalDevice, &descriptor_set_layout_create_info, nullptr,
-                                            &sortStages.m_SortDescriptorSetLayoutInputOutputs);
+                                             &sortStages.m_SortDescriptorSetLayoutInputOutputs);
       VK_CHECK_RESULT(vkResult);
       AllocDescriptor(sortStages.pool, sortStages.m_SortDescriptorSetLayoutInputOutputs,
                       &sortStages.m_SortDescriptorSetInputOutput[0]);
@@ -4451,7 +4408,7 @@ struct Context {
       descriptor_set_layout_create_info.pBindings = layout_bindings_set_Scan;
       descriptor_set_layout_create_info.bindingCount = 3;
       vkResult = vkCreateDescriptorSetLayout(logicalDevice, &descriptor_set_layout_create_info, nullptr,
-                                            &sortStages.m_SortDescriptorSetLayoutScan);
+                                             &sortStages.m_SortDescriptorSetLayoutScan);
       VK_CHECK_RESULT(vkResult);
       AllocDescriptor(sortStages.pool, sortStages.m_SortDescriptorSetLayoutScan,
                       &sortStages.m_SortDescriptorSetScanSets[0]);
@@ -4461,7 +4418,7 @@ struct Context {
       descriptor_set_layout_create_info.pBindings = layout_bindings_set_Scratch;
       descriptor_set_layout_create_info.bindingCount = 2;
       vkResult = vkCreateDescriptorSetLayout(logicalDevice, &descriptor_set_layout_create_info, nullptr,
-                                            &sortStages.m_SortDescriptorSetLayoutScratch);
+                                             &sortStages.m_SortDescriptorSetLayoutScratch);
       VK_CHECK_RESULT(vkResult);
       AllocDescriptor(sortStages.pool, sortStages.m_SortDescriptorSetLayoutScratch,
                       &sortStages.m_SortDescriptorSetScratch);
@@ -4478,14 +4435,14 @@ struct Context {
       layout_create_info.flags = 0;
       layout_create_info.setLayoutCount = 3;
       VkDescriptorSetLayout layouts[] = {sortStages.m_SortDescriptorSetLayoutInputOutputs,
-                                        sortStages.m_SortDescriptorSetLayoutScan,
-                                        sortStages.m_SortDescriptorSetLayoutScratch};
+                                         sortStages.m_SortDescriptorSetLayoutScan,
+                                         sortStages.m_SortDescriptorSetLayoutScratch};
       layout_create_info.pSetLayouts = layouts;
       layout_create_info.pushConstantRangeCount = 1;
       layout_create_info.pPushConstantRanges = &constant_range;
 
       VkResult bCreatePipelineLayout =
-          vkCreatePipelineLayout(logicalDevice, &layout_create_info, nullptr, &sortStages.layout);
+        vkCreatePipelineLayout(logicalDevice, &layout_create_info, nullptr, &sortStages.layout);
       assert(bCreatePipelineLayout == VK_SUCCESS);
 
       {
@@ -4514,7 +4471,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.Count.pipeline);
+                                       &sortStages.Count.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4546,7 +4503,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.CountReduce.pipeline);
+                                       &sortStages.CountReduce.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4578,7 +4535,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.Scan.pipeline);
+                                       &sortStages.Scan.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4610,7 +4567,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.ScanAdd.pipeline);
+                                       &sortStages.ScanAdd.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4642,7 +4599,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.Scatter.pipeline);
+                                       &sortStages.Scatter.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4674,7 +4631,7 @@ struct Context {
 
         // At this point, create all internal compute pipelines as well.
         err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr,
-                                      &sortStages.ScatterPayload.pipeline);
+                                       &sortStages.ScatterPayload.pipeline);
         if (err != VK_SUCCESS) {
           LOG_ERROR("failed to create sort pipeline! Are all entrypoint names correct? \n" + errorString(err));
         }
@@ -4958,78 +4915,78 @@ struct Context {
   //   ImGui_ImplVulkan_DestroyFontUploadObjects();
   // }
 
-//   void rasterizeGui() {
-//     ImGui::Render();
-//     ImDrawData *draw_data = ImGui::GetDrawData();
+  //   void rasterizeGui() {
+  //     ImGui::Render();
+  //     ImDrawData *draw_data = ImGui::GetDrawData();
 
-//     VkResult err;
-//     VkCommandBufferBeginInfo cmdBufInfo{};
-//     cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  //     VkResult err;
+  //     VkCommandBufferBeginInfo cmdBufInfo{};
+  //     cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-//     VkRenderPassBeginInfo renderPassBeginInfo = {};
-//     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-//     renderPassBeginInfo.pNext = nullptr;
-//     renderPassBeginInfo.renderPass = imgui.renderPass;
-//     renderPassBeginInfo.renderArea.offset.x = 0;
-//     renderPassBeginInfo.renderArea.offset.y = 0;
-//     renderPassBeginInfo.renderArea.extent.width = imgui.width;
-//     renderPassBeginInfo.renderArea.extent.height = imgui.height;
-//     renderPassBeginInfo.clearValueCount = 0;
-//     renderPassBeginInfo.pClearValues = nullptr;
-//     renderPassBeginInfo.framebuffer = imgui.frameBuffer;
+  //     VkRenderPassBeginInfo renderPassBeginInfo = {};
+  //     renderPassBeginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  //     renderPassBeginInfo.pNext = nullptr;
+  //     renderPassBeginInfo.renderPass = imgui.renderPass;
+  //     renderPassBeginInfo.renderArea.offset.x = 0;
+  //     renderPassBeginInfo.renderArea.offset.y = 0;
+  //     renderPassBeginInfo.renderArea.extent.width = imgui.width;
+  //     renderPassBeginInfo.renderArea.extent.height = imgui.height;
+  //     renderPassBeginInfo.clearValueCount = 0;
+  //     renderPassBeginInfo.pClearValues = nullptr;
+  //     renderPassBeginInfo.framebuffer = imgui.frameBuffer;
 
-//     err = vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo);
+  //     err = vkBeginCommandBuffer(graphicsCommandBuffer, &cmdBufInfo);
 
-//     // Transition our attachments into optimal attachment formats
-//     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image,
-//                                           imgui.colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-//                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
+  //     // Transition our attachments into optimal attachment formats
+  //     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image,
+  //                                           imgui.colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+  //                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
 
-//     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image,
-//                                           imgui.depthAttachment->layout,
-//                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-//                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
+  //     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image,
+  //                                           imgui.depthAttachment->layout,
+  //                                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+  //                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
 
-//     // This will clear the color and depth attachment
-//     vkCmdBeginRenderPass(graphicsCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  //     // This will clear the color and depth attachment
+  //     vkCmdBeginRenderPass(graphicsCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-//     // Record dear imgui primitives into command buffer
-//     ImGui_ImplVulkan_RenderDrawData(draw_data, graphicsCommandBuffer);
+  //     // Record dear imgui primitives into command buffer
+  //     ImGui_ImplVulkan_RenderDrawData(draw_data, graphicsCommandBuffer);
 
-//     vkCmdEndRenderPass(graphicsCommandBuffer);
+  //     vkCmdEndRenderPass(graphicsCommandBuffer);
 
-//     // At the end of the renderpass, we'll transition the layout back to it's previous layout
-//     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-//                                           imgui.colorAttachment->layout,
-//                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
+  //     // At the end of the renderpass, we'll transition the layout back to it's previous layout
+  //     imgui.colorAttachment->setImageLayout(graphicsCommandBuffer, imgui.colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+  //                                           imgui.colorAttachment->layout,
+  //                                           {VK_IMAGE_ASPECT_COLOR_BIT, 0, imgui.colorAttachment->mipLevels, 0, 1});
 
-//     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-//                                           imgui.depthAttachment->layout,
-//                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
+  //     imgui.depthAttachment->setImageLayout(graphicsCommandBuffer, imgui.depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+  //                                           imgui.depthAttachment->layout,
+  //                                           {VK_IMAGE_ASPECT_DEPTH_BIT, 0, imgui.depthAttachment->mipLevels, 0, 1});
 
-//     err = vkEndCommandBuffer(graphicsCommandBuffer);
-//     if (err)
-//       LOG_ERROR("failed to end command buffer! : \n" + errorString(err));
+  //     err = vkEndCommandBuffer(graphicsCommandBuffer);
+  //     if (err)
+  //       LOG_ERROR("failed to end command buffer! : \n" + errorString(err));
 
-//     VkSubmitInfo submitInfo{};
-//     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-//     submitInfo.pNext = NULL;
-//     submitInfo.waitSemaphoreCount = 0;
-//     submitInfo.pWaitSemaphores = nullptr;     //&acquireImageSemaphoreHandleList[currentFrame];
-//     submitInfo.pWaitDstStageMask = nullptr;   //&pipelineStageFlags;
-//     submitInfo.commandBufferCount = 1;
-//     submitInfo.pCommandBuffers = &graphicsCommandBuffer;
-//     submitInfo.signalSemaphoreCount = 0;
-//     submitInfo.pSignalSemaphores = nullptr;   //&writeImageSemaphoreHandleList[currentImageIndex]};
+  //     VkSubmitInfo submitInfo{};
+  //     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  //     submitInfo.pNext = NULL;
+  //     submitInfo.waitSemaphoreCount = 0;
+  //     submitInfo.pWaitSemaphores = nullptr;     //&acquireImageSemaphoreHandleList[currentFrame];
+  //     submitInfo.pWaitDstStageMask = nullptr;   //&pipelineStageFlags;
+  //     submitInfo.commandBufferCount = 1;
+  //     submitInfo.pCommandBuffers = &graphicsCommandBuffer;
+  //     submitInfo.signalSemaphoreCount = 0;
+  //     submitInfo.pSignalSemaphores = nullptr;   //&writeImageSemaphoreHandleList[currentImageIndex]};
 
-//     err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-//     if (err)
-//       LOG_ERROR("failed to submit to queue! : \n" + errorString(err));
+  //     err = vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+  //     if (err)
+  //       LOG_ERROR("failed to submit to queue! : \n" + errorString(err));
 
-//     err = vkQueueWaitIdle(graphicsQueue);
-//     if (err)
-//       LOG_ERROR("failed to wait for queue idle! : \n" + errorString(err));
-//   }
+  //     err = vkQueueWaitIdle(graphicsQueue);
+  //     if (err)
+  //       LOG_ERROR("failed to wait for queue idle! : \n" + errorString(err));
+  //   }
 };
 
 
@@ -5101,7 +5058,7 @@ struct TriangleAccel : public Accel {
   std::vector<uint32_t> maxPrimitiveCounts;
 
   TriangleAccel(Context* context, size_t numGeometries, TriangleGeom *geometries)
-      : Accel(context) {
+    : Accel(context) {
     this->geometries.resize(numGeometries);
     memcpy(this->geometries.data(), geometries, sizeof(GPRTGeom *) * numGeometries);
   };
@@ -5147,7 +5104,7 @@ struct TriangleAccel : public Accel {
       // vertex data
       geom.geometry.triangles.vertexFormat = VK_FORMAT_R32G32B32_SFLOAT;
       geom.geometry.triangles.vertexData.deviceAddress =
-          geometries[gid]->vertex.buffers[0]->deviceAddress + geometries[gid]->vertex.offset;
+        geometries[gid]->vertex.buffers[0]->deviceAddress + geometries[gid]->vertex.offset;
       geom.geometry.triangles.vertexStride = geometries[gid]->vertex.stride;
       geom.geometry.triangles.maxVertex = geometries[gid]->vertex.count;
 
@@ -5178,12 +5135,12 @@ struct TriangleAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -5225,19 +5182,19 @@ struct TriangleAccel : public Accel {
 
     if (!accelBuffer) {
       accelBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means we can use this buffer as a means of storing an acceleration
-                     // structure
-                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means we can use this buffer as a means of storing an acceleration
+                   // structure
+                   VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
 
       VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
       accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -5260,19 +5217,19 @@ struct TriangleAccel : public Accel {
 
     if (!scratchBuffer) {
       scratchBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                     // Is this required? If not, remove this...
-                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                   // Is this required? If not, remove this...
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
     }
 
     VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
@@ -5282,12 +5239,12 @@ struct TriangleAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -5402,10 +5359,10 @@ struct TriangleAccel : public Accel {
         LOG_ERROR("build mode is uninitialized!");
       } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else {
         LOG_ERROR("build mode unsupported!");
       }
@@ -5433,19 +5390,19 @@ struct TriangleAccel : public Accel {
 
       if (!scratchBuffer) {
         scratchBuffer =
-            new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                       // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                       // Is this required? If not, remove this...
-                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                           // means we can get this buffer's address with
-                           // vkGetBufferDeviceAddress
-                           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                           // means we can use this buffer as a storage buffer
-                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                       // means that this memory is stored directly on the device
-                       //  (rather than the host, or in a special host/device section)
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                       accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                     // Is this required? If not, remove this...
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                     // means we can get this buffer's address with
+                     // vkGetBufferDeviceAddress
+                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                     // means we can use this buffer as a storage buffer
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                     // means that this memory is stored directly on the device
+                     //  (rather than the host, or in a special host/device section)
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
       }
     }
 
@@ -5456,10 +5413,10 @@ struct TriangleAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else {
       LOG_ERROR("build mode unsupported!");
     }
@@ -5472,9 +5429,9 @@ struct TriangleAccel : public Accel {
     }
     accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
     accelerationBuildGeometryInfo.srcAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.dstAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.geometryCount = (uint32_t)accelerationStructureGeometries.size();
     accelerationBuildGeometryInfo.pGeometries = accelerationStructureGeometries.data();
     accelerationBuildGeometryInfo.scratchData.deviceAddress = scratchBuffer->deviceAddress;
@@ -5599,11 +5556,11 @@ struct TriangleAccel : public Accel {
                                  // means we can use this buffer as a means of storing an acceleration
                                  // structure
                                  VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                                     // means we can get this buffer's address with
-                                     // vkGetBufferDeviceAddress
-                                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                                     // means we can use this buffer as a storage buffer
-                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                 // means we can get this buffer's address with
+                                 // vkGetBufferDeviceAddress
+                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                                 // means we can use this buffer as a storage buffer
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                  // means that this memory is stored directly on the device
                                  //  (rather than the host, or in a special host/device section)
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, compactedSize,
@@ -5723,7 +5680,7 @@ struct AABBAccel : public Accel {
   std::vector<uint32_t> maxPrimitiveCounts;
 
   AABBAccel(Context* context, size_t numGeometries, AABBGeom *geometries)
-      : Accel(context) {
+    : Accel(context) {
     this->geometries.resize(numGeometries);
     memcpy(this->geometries.data(), geometries, sizeof(GPRTGeom *) * numGeometries);
   };
@@ -5790,12 +5747,12 @@ struct AABBAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -5836,19 +5793,19 @@ struct AABBAccel : public Accel {
 
     if (!accelBuffer) {
       accelBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means we can use this buffer as a means of storing an acceleration
-                     // structure
-                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means we can use this buffer as a means of storing an acceleration
+                   // structure
+                   VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
 
       VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
       accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -5871,19 +5828,19 @@ struct AABBAccel : public Accel {
 
     if (!scratchBuffer) {
       scratchBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                     // Is this required? If not, remove this...
-                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                   // Is this required? If not, remove this...
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
     }
 
     VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
@@ -5893,12 +5850,12 @@ struct AABBAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -5999,10 +5956,10 @@ struct AABBAccel : public Accel {
         LOG_ERROR("build mode is uninitialized!");
       } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else {
         LOG_ERROR("build mode not recognized!");
       }
@@ -6030,19 +5987,19 @@ struct AABBAccel : public Accel {
 
       if (!scratchBuffer) {
         scratchBuffer =
-            new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                       // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                       // Is this required? If not, remove this...
-                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                           // means we can get this buffer's address with
-                           // vkGetBufferDeviceAddress
-                           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                           // means we can use this buffer as a storage buffer
-                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                       // means that this memory is stored directly on the device
-                       //  (rather than the host, or in a special host/device section)
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                       accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                     // Is this required? If not, remove this...
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                     // means we can get this buffer's address with
+                     // vkGetBufferDeviceAddress
+                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                     // means we can use this buffer as a storage buffer
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                     // means that this memory is stored directly on the device
+                     //  (rather than the host, or in a special host/device section)
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
       }
     }
 
@@ -6053,10 +6010,10 @@ struct AABBAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else {
       LOG_ERROR("build mode unsupported!");
     }
@@ -6069,9 +6026,9 @@ struct AABBAccel : public Accel {
     }
     accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
     accelerationBuildGeometryInfo.srcAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.dstAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.geometryCount = (uint32_t)accelerationStructureGeometries.size();
     accelerationBuildGeometryInfo.pGeometries = accelerationStructureGeometries.data();
     accelerationBuildGeometryInfo.scratchData.deviceAddress = scratchBuffer->deviceAddress;
@@ -6111,7 +6068,7 @@ struct AABBAccel : public Accel {
     VkAccelerationStructureDeviceAddressInfoKHR accelerationDeviceAddressInfo{};
     accelerationDeviceAddressInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
     accelerationDeviceAddressInfo.accelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     address = gprt::vkGetAccelerationStructureDeviceAddress(context->logicalDevice, &accelerationDeviceAddressInfo);
 
     // If we're minimizing memory usage, free scratch now
@@ -6197,11 +6154,11 @@ struct AABBAccel : public Accel {
                                  // means we can use this buffer as a means of storing an acceleration
                                  // structure
                                  VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                                     // means we can get this buffer's address with
-                                     // vkGetBufferDeviceAddress
-                                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                                     // means we can use this buffer as a storage buffer
-                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                 // means we can get this buffer's address with
+                                 // vkGetBufferDeviceAddress
+                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                                 // means we can use this buffer as a storage buffer
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                  // means that this memory is stored directly on the device
                                  //  (rather than the host, or in a special host/device section)
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, compactedSize,
@@ -6342,7 +6299,7 @@ struct InstanceAccel : public Accel {
   VkBuildAccelerationStructureFlagsKHR flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 
   InstanceAccel(Context* context, uint32_t numInstances, GPRTAccel *instances)
-      : Accel(context) {
+    : Accel(context) {
     this->numInstances = numInstances;
 
     if (instances) {
@@ -6368,11 +6325,11 @@ struct InstanceAccel : public Accel {
     instancesBuffer = new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer, context->graphicsQueue,
                                  // I guess I need this to use these buffers as input to tree builds?
                                  VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-                                     // means we can get this buffer's address with
-                                     // vkGetBufferDeviceAddress
-                                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                                     // means we can use this buffer as a storage buffer
-                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                 // means we can get this buffer's address with
+                                 // vkGetBufferDeviceAddress
+                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                                 // means we can use this buffer as a storage buffer
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                  // means that this memory is stored directly on the device
                                  //  (rather than the host, or in a special host/device section)
                                  // VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT |
@@ -6395,7 +6352,7 @@ struct InstanceAccel : public Accel {
                                                     // size_t count,
                                                     // size_t stride,
                                                     // size_t offset
-  ) {
+                          ) {
     this->visibilityMasks.buffer = masks;
   }
 
@@ -6494,9 +6451,9 @@ struct InstanceAccel : public Accel {
         instance->accelerationStructureReference = addresses[i];
         instance->transform = {
           {
-              {1.0f, 0.0f, 0.0f, 0.0f}, // First row
-              {0.0f, 1.0f, 0.0f, 0.0f}, // Second row
-              {0.0f, 0.0f, 1.0f, 0.0f}  // Third row
+            {1.0f, 0.0f, 0.0f, 0.0f}, // First row
+            {0.0f, 1.0f, 0.0f, 0.0f}, // Second row
+            {0.0f, 0.0f, 1.0f, 0.0f}  // Third row
           }
         };
 
@@ -6568,17 +6525,17 @@ struct InstanceAccel : public Accel {
     accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
     accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
     accelerationStructureGeometry.geometry.instances.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
     accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
     accelerationStructureGeometry.geometry.instances.data.deviceAddress = instancesBuffer->deviceAddress;
 
     // Get size info
     /*
-    The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of
-    pBuildInfo are ignored. Any VkDeviceOrHostAddressKHR members of pBuildInfo
-    are ignored by this command, except that the hostAddress member of
-    VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be
-    examined to check if it is NULL.*
+      The pSrcAccelerationStructure, dstAccelerationStructure, and mode members of
+      pBuildInfo are ignored. Any VkDeviceOrHostAddressKHR members of pBuildInfo
+      are ignored by this command, except that the hostAddress member of
+      VkAccelerationStructureGeometryTrianglesDataKHR::transformData will be
+      examined to check if it is NULL.*
     */
     VkAccelerationStructureBuildGeometryInfoKHR accelerationStructureBuildGeometryInfo{};
     accelerationStructureBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -6587,12 +6544,12 @@ struct InstanceAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                     VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -6637,19 +6594,19 @@ struct InstanceAccel : public Accel {
 
     if (!accelBuffer) {
       accelBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means we can use this buffer as a means of storing an acceleration
-                     // structure
-                     VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means we can use this buffer as a means of storing an acceleration
+                   // structure
+                   VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.accelerationStructureSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
 
       VkAccelerationStructureCreateInfoKHR accelerationStructureCreateInfo{};
       accelerationStructureCreateInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -6672,19 +6629,19 @@ struct InstanceAccel : public Accel {
 
     if (!scratchBuffer) {
       scratchBuffer =
-          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                     // Is this required? If not, remove this...
-                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                         // means we can get this buffer's address with
-                         // vkGetBufferDeviceAddress
-                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                         // means we can use this buffer as a storage buffer
-                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                     // means that this memory is stored directly on the device
-                     //  (rather than the host, or in a special host/device section)
-                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+        new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                   // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                   // Is this required? If not, remove this...
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                   // means we can get this buffer's address with
+                   // vkGetBufferDeviceAddress
+                   VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                   // means we can use this buffer as a storage buffer
+                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                   // means that this memory is stored directly on the device
+                   //  (rather than the host, or in a special host/device section)
+                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                   accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
     }
 
     VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
@@ -6694,12 +6651,12 @@ struct InstanceAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (mode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_BUILD_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (mode == GPRT_BUILD_MODE_FAST_TRACE_NO_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
     else {
@@ -6724,7 +6681,7 @@ struct InstanceAccel : public Accel {
     accelerationStructureBuildRangeInfo.firstVertex = 0;
     accelerationStructureBuildRangeInfo.transformOffset = 0;
     std::vector<VkAccelerationStructureBuildRangeInfoKHR *> accelerationBuildStructureRangeInfoPtrs = {
-        &accelerationStructureBuildRangeInfo};
+      &accelerationStructureBuildRangeInfo};
 
     // // Build the acceleration structure on the device via a one-time command
     // buffer submission
@@ -6902,7 +6859,7 @@ struct InstanceAccel : public Accel {
     accelerationStructureGeometry.geometryType = VK_GEOMETRY_TYPE_INSTANCES_KHR;
     accelerationStructureGeometry.flags = VK_GEOMETRY_OPAQUE_BIT_KHR;
     accelerationStructureGeometry.geometry.instances.sType =
-        VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
+      VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
     accelerationStructureGeometry.geometry.instances.arrayOfPointers = VK_FALSE;
     accelerationStructureGeometry.geometry.instances.data.deviceAddress = instancesBuffer->deviceAddress;
 
@@ -6916,10 +6873,10 @@ struct InstanceAccel : public Accel {
         LOG_ERROR("build mode is uninitialized!");
       } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
         accelerationStructureBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                                       VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+          VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
       else {
         LOG_ERROR("build mode unsupported!");
       }
@@ -6949,19 +6906,19 @@ struct InstanceAccel : public Accel {
 
       if (!scratchBuffer) {
         scratchBuffer =
-            new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                       // means that the buffer can be used in a VkDescriptorBufferInfo. //
-                       // Is this required? If not, remove this...
-                       VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
-                           // means we can get this buffer's address with
-                           // vkGetBufferDeviceAddress
-                           VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                           // means we can use this buffer as a storage buffer
-                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                       // means that this memory is stored directly on the device
-                       //  (rather than the host, or in a special host/device section)
-                       VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
-                       accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
+          new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
+                     // means that the buffer can be used in a VkDescriptorBufferInfo. //
+                     // Is this required? If not, remove this...
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT |
+                     // means we can get this buffer's address with
+                     // vkGetBufferDeviceAddress
+                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                     // means we can use this buffer as a storage buffer
+                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                     // means that this memory is stored directly on the device
+                     //  (rather than the host, or in a special host/device section)
+                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, accelerationStructureBuildSizesInfo.buildScratchSize,
+                     accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
       }
     }
 
@@ -6972,10 +6929,10 @@ struct InstanceAccel : public Accel {
       LOG_ERROR("build mode is uninitialized!");
     } else if (buildMode == GPRT_BUILD_MODE_FAST_BUILD_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else if (buildMode == GPRT_BUILD_MODE_FAST_TRACE_AND_UPDATE)
       accelerationBuildGeometryInfo.flags = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR |
-                                            VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
+        VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
     else {
       LOG_ERROR("build mode unsupported!");
     }
@@ -6988,9 +6945,9 @@ struct InstanceAccel : public Accel {
     }
     accelerationBuildGeometryInfo.mode = VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR;
     accelerationBuildGeometryInfo.srcAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.dstAccelerationStructure =
-        (isCompact) ? compactAccelerationStructure : accelerationStructure;
+      (isCompact) ? compactAccelerationStructure : accelerationStructure;
     accelerationBuildGeometryInfo.geometryCount = 1;
     accelerationBuildGeometryInfo.pGeometries = &accelerationStructureGeometry;
     accelerationBuildGeometryInfo.scratchData.deviceAddress = scratchBuffer->deviceAddress;
@@ -7001,7 +6958,7 @@ struct InstanceAccel : public Accel {
     accelerationStructureBuildRangeInfo.firstVertex = 0;
     accelerationStructureBuildRangeInfo.transformOffset = 0;
     std::vector<VkAccelerationStructureBuildRangeInfoKHR *> accelerationBuildStructureRangeInfoPtrs = {
-        &accelerationStructureBuildRangeInfo};
+      &accelerationStructureBuildRangeInfo};
 
     VkCommandBufferBeginInfo cmdBufInfo{};
     cmdBufInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -7125,11 +7082,11 @@ struct InstanceAccel : public Accel {
                                  // means we can use this buffer as a means of storing an acceleration
                                  // structure
                                  VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR |
-                                     // means we can get this buffer's address with
-                                     // vkGetBufferDeviceAddress
-                                     VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-                                     // means we can use this buffer as a storage buffer
-                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                 // means we can get this buffer's address with
+                                 // vkGetBufferDeviceAddress
+                                 VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+                                 // means we can use this buffer as a storage buffer
+                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
                                  // means that this memory is stored directly on the device
                                  //  (rather than the host, or in a special host/device section)
                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, compactedSize,
@@ -7295,21 +7252,21 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
 
     std::vector<uint8_t> shaderHandleStorage(sbtSize);
     VkResult err = gprt::vkGetRayTracingShaderGroupHandles(logicalDevice, raytracingPipeline, 0, groupCount, sbtSize,
-                                                            shaderHandleStorage.data());
+                                                           shaderHandleStorage.data());
     if (err)
       LOG_ERROR("failed to get ray tracing shader group handles! : \n" + errorString(err));
 
     const VkBufferUsageFlags bufferUsageFlags =
-        // means we can use this buffer as a SBT
-        VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
-        // means we can get this buffer's address with vkGetBufferDeviceAddress
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-        // means we can use this buffer as a storage buffer resource
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+      // means we can use this buffer as a SBT
+      VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR |
+      // means we can get this buffer's address with vkGetBufferDeviceAddress
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+      // means we can use this buffer as a storage buffer resource
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with
-                                                                                            // vkMapMemory
-                                                    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and
-                                                                                            // "invalidate" not needed
+      // vkMapMemory
+      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and
+    // "invalidate" not needed
 
     // std::cout<<"Todo, get some smarter memory allocation working..."
     // <<std::endl;
@@ -7323,8 +7280,8 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
     if (!raygenTable && raygenPrograms.size() > 0) {
       raygenTable = new Buffer(physicalDevice, logicalDevice, allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                                bufferUsageFlags, memoryUsageFlags, recordSize * numRayGens,
-                                rayTracingPipelineProperties.shaderGroupBaseAlignment);
+                               bufferUsageFlags, memoryUsageFlags, recordSize * numRayGens,
+                               rayTracingPipelineProperties.shaderGroupBaseAlignment);
     }
 
     // allocate / resize miss table
@@ -7336,8 +7293,8 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
     if (!missTable && missPrograms.size() > 0) {
       missTable = new Buffer(physicalDevice, logicalDevice, allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                              bufferUsageFlags, memoryUsageFlags, recordSize * numMissProgs,
-                              rayTracingPipelineProperties.shaderGroupBaseAlignment);
+                             bufferUsageFlags, memoryUsageFlags, recordSize * numMissProgs,
+                             rayTracingPipelineProperties.shaderGroupBaseAlignment);
     }
 
     // allocate / resize callable table
@@ -7349,8 +7306,8 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
     if (!callableTable && callablePrograms.size() > 0) {
       callableTable = new Buffer(physicalDevice, logicalDevice, allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                              bufferUsageFlags, memoryUsageFlags, recordSize * numCallableProgs,
-                              rayTracingPipelineProperties.shaderGroupBaseAlignment);
+                                 bufferUsageFlags, memoryUsageFlags, recordSize * numCallableProgs,
+                                 rayTracingPipelineProperties.shaderGroupBaseAlignment);
     }
 
     // allocate / resize hit group table
@@ -7362,8 +7319,8 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
     if (!hitgroupTable && numHitRecords > 0) {
       hitgroupTable = new Buffer(physicalDevice, logicalDevice, allocator, VK_NULL_HANDLE, VK_NULL_HANDLE,
-                                  bufferUsageFlags, memoryUsageFlags, recordSize * numHitRecords,
-                                  rayTracingPipelineProperties.shaderGroupBaseAlignment);
+                                 bufferUsageFlags, memoryUsageFlags, recordSize * numHitRecords,
+                                 rayTracingPipelineProperties.shaderGroupBaseAlignment);
     }
 
     // Raygen records
@@ -7472,12 +7429,12 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
                   // BLAS's geometry
                   size_t instanceOffset = instanceAccel->instanceOffset + geomIDOffset;
                   size_t recordOffset =
-                      recordStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset);
+                    recordStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset);
                   // +
                   // recordStride * (numRayGens + numMissProgs);
                   size_t handleOffset =
-                      handleStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset) +
-                      handleStride * (numRayGens + numMissProgs + numCallableProgs);
+                    handleStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset) +
+                    handleStride * (numRayGens + numMissProgs + numCallableProgs);
                   memcpy(mapped + recordOffset, shaderHandleStorage.data() + handleOffset, handleSize);
 
                   // Then, copy params following handle
@@ -7504,11 +7461,11 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
                   // BLAS's geometry
                   size_t instanceOffset = instanceAccel->instanceOffset + geomIDOffset;
                   size_t recordOffset =
-                      recordStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset);
+                    recordStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset);
                   // + recordStride * (numRayGens + numMissProgs);
                   size_t handleOffset =
-                      handleStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset) +
-                      handleStride * (numRayGens + numMissProgs + numCallableProgs);
+                    handleStride * (rayType + requestedFeatures.numRayTypes * geomID + instanceOffset) +
+                    handleStride * (numRayGens + numMissProgs + numCallableProgs);
                   memcpy(mapped + recordOffset, shaderHandleStorage.data() + handleOffset, handleSize);
 
                   // Then, copy params following handle
@@ -7584,10 +7541,10 @@ void Context::buildPipeline() {
     binding.descriptorCount = poolSize.descriptorCount;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                          VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                          VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
-                          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                          VK_SHADER_STAGE_COMPUTE_BIT;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+      VK_SHADER_STAGE_COMPUTE_BIT;
 
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {binding};
 
@@ -7595,7 +7552,7 @@ void Context::buildPipeline() {
     setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
     setLayoutBindingFlags.bindingCount = 1;
     std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
     setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -7612,7 +7569,7 @@ void Context::buildPipeline() {
     uint32_t variableDescCounts[] = {static_cast<uint32_t>(poolSize.descriptorCount)};
 
     variableDescriptorCountAllocInfo.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;
     variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
 
@@ -7648,7 +7605,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].pImageInfo = samplerDescriptors.data();
 
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
-                            writeDescriptorSets.data(), 0, nullptr);
+                           writeDescriptorSets.data(), 0, nullptr);
 
     // After this, we'll need to rebuild our pipelines since our descriptor
     // set layouts changed.
@@ -7688,10 +7645,10 @@ void Context::buildPipeline() {
     binding.descriptorCount = poolSize.descriptorCount;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                          VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                          VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
-                          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                          VK_SHADER_STAGE_COMPUTE_BIT;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+      VK_SHADER_STAGE_COMPUTE_BIT;
 
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {binding};
 
@@ -7699,7 +7656,7 @@ void Context::buildPipeline() {
     setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
     setLayoutBindingFlags.bindingCount = 1;
     std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
     setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -7716,7 +7673,7 @@ void Context::buildPipeline() {
     uint32_t variableDescCounts[] = {static_cast<uint32_t>(poolSize.descriptorCount)};
 
     variableDescriptorCountAllocInfo.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;
     variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
 
@@ -7757,7 +7714,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].pImageInfo = textureDescriptors.data();
 
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
-                            writeDescriptorSets.data(), 0, nullptr);
+                           writeDescriptorSets.data(), 0, nullptr);
 
     // After this, we'll need to rebuild our pipelines since our descriptor
     // set layouts changed.
@@ -7797,10 +7754,10 @@ void Context::buildPipeline() {
     binding.descriptorCount = poolSize.descriptorCount;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                          VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                          VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
-                          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                          VK_SHADER_STAGE_COMPUTE_BIT;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+      VK_SHADER_STAGE_COMPUTE_BIT;
 
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {binding};
 
@@ -7808,7 +7765,7 @@ void Context::buildPipeline() {
     setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
     setLayoutBindingFlags.bindingCount = 1;
     std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
     setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -7825,7 +7782,7 @@ void Context::buildPipeline() {
     uint32_t variableDescCounts[] = {static_cast<uint32_t>(poolSize.descriptorCount)};
 
     variableDescriptorCountAllocInfo.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;
     variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
 
@@ -7866,7 +7823,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].pImageInfo = textureDescriptors.data();
 
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
-                            writeDescriptorSets.data(), 0, nullptr);
+                           writeDescriptorSets.data(), 0, nullptr);
 
     // After this, we'll need to rebuild our pipelines since our descriptor
     // set layouts changed.
@@ -7906,10 +7863,10 @@ void Context::buildPipeline() {
     binding.descriptorCount = poolSize.descriptorCount;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                          VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                          VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
-                          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                          VK_SHADER_STAGE_COMPUTE_BIT;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+      VK_SHADER_STAGE_COMPUTE_BIT;
 
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {binding};
 
@@ -7917,7 +7874,7 @@ void Context::buildPipeline() {
     setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
     setLayoutBindingFlags.bindingCount = 1;
     std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
     setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -7934,7 +7891,7 @@ void Context::buildPipeline() {
     uint32_t variableDescCounts[] = {static_cast<uint32_t>(poolSize.descriptorCount)};
 
     variableDescriptorCountAllocInfo.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;
     variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
 
@@ -7975,7 +7932,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].pImageInfo = textureDescriptors.data();
 
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
-                            writeDescriptorSets.data(), 0, nullptr);
+                           writeDescriptorSets.data(), 0, nullptr);
 
     // After this, we'll need to rebuild our pipelines since our descriptor
     // set layouts changed.
@@ -8015,10 +7972,10 @@ void Context::buildPipeline() {
     binding.descriptorCount = poolSize.descriptorCount;
     binding.binding = 0;
     binding.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                          VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                          VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
-                          VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
-                          VK_SHADER_STAGE_COMPUTE_BIT;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR | 
+      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT |
+      VK_SHADER_STAGE_COMPUTE_BIT;
 
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {binding};
 
@@ -8026,7 +7983,7 @@ void Context::buildPipeline() {
     setLayoutBindingFlags.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
     setLayoutBindingFlags.bindingCount = 1;
     std::vector<VkDescriptorBindingFlagsEXT> descriptorBindingFlags = {
-        VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
+      VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
     setLayoutBindingFlags.pBindingFlags = descriptorBindingFlags.data();
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfo{};
@@ -8043,7 +8000,7 @@ void Context::buildPipeline() {
     uint32_t variableDescCounts[] = {static_cast<uint32_t>(poolSize.descriptorCount)};
 
     variableDescriptorCountAllocInfo.sType =
-        VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+      VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
     variableDescriptorCountAllocInfo.descriptorSetCount = 1;
     variableDescriptorCountAllocInfo.pDescriptorCounts = variableDescCounts;
 
@@ -8084,7 +8041,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].pBufferInfo = bufferDescriptors.data();
 
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
-                            writeDescriptorSets.data(), 0, nullptr);
+                           writeDescriptorSets.data(), 0, nullptr);
 
     // After this, we'll need to rebuild our pipelines since our descriptor
     // set layouts changed.
@@ -8108,16 +8065,16 @@ void Context::buildPipeline() {
   if (!rasterRecordBuffer) {
     // Create buffer to contain uniform buffer data
     const VkBufferUsageFlags bufferUsageFlags =
-        // means we can get this buffer's address with vkGetBufferDeviceAddress
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-        // means we can use this buffer to transfer into another
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-        // means we can use this buffer to receive data transferred from another
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-        // means we can use this buffer as a uniform buffer
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-        // means we can use this buffer as a storage buffer
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+      // means we can get this buffer's address with vkGetBufferDeviceAddress
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+      // means we can use this buffer to transfer into another
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+      // means we can use this buffer to receive data transferred from another
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+      // means we can use this buffer as a uniform buffer
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+      // means we can use this buffer as a storage buffer
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;   // means most efficient for
                                                                                           // device access
 
@@ -8133,9 +8090,9 @@ void Context::buildPipeline() {
     const uint32_t recordSize = alignedSize(std::min(maxGroupSize, requestedFeatures.recordSize), groupAlignment);
 
     rasterRecordBuffer =
-        new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue, bufferUsageFlags,
-                    memoryUsageFlags, recordSize * std::max(size_t(1), Geom::geoms.size()),
-                    rayTracingPipelineProperties.shaderGroupBaseAlignment);
+      new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue, bufferUsageFlags,
+                 memoryUsageFlags, recordSize * std::max(size_t(1), Geom::geoms.size()),
+                 rayTracingPipelineProperties.shaderGroupBaseAlignment);
 
     // Uniform buffer descriptors for each geometry's record
     VkDescriptorBufferInfo uniformBufferDescriptor;
@@ -8176,16 +8133,16 @@ void Context::buildPipeline() {
   if (!computeRecordBuffer) {
     // Create buffer to contain uniform buffer data
     const VkBufferUsageFlags bufferUsageFlags =
-        // means we can get this buffer's address with vkGetBufferDeviceAddress
-        VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-        // means we can use this buffer to transfer into another
-        VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-        // means we can use this buffer to receive data transferred from another
-        VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-        // means we can use this buffer as a uniform buffer
-        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
-        // means we can use this buffer as a storage buffer
-        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+      // means we can get this buffer's address with vkGetBufferDeviceAddress
+      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+      // means we can use this buffer to transfer into another
+      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+      // means we can use this buffer to receive data transferred from another
+      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+      // means we can use this buffer as a uniform buffer
+      VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT |
+      // means we can use this buffer as a storage buffer
+      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
     const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;   // means most efficient for
                                                                                           // device access
 
@@ -8201,9 +8158,9 @@ void Context::buildPipeline() {
     const uint32_t recordSize = alignedSize(std::min(maxGroupSize, requestedFeatures.recordSize), groupAlignment);
 
     computeRecordBuffer =
-        new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue, bufferUsageFlags,
-                    memoryUsageFlags, recordSize * std::max(size_t(1), Compute::computes.size()),
-                    rayTracingPipelineProperties.shaderGroupBaseAlignment);
+      new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue, bufferUsageFlags,
+                 memoryUsageFlags, recordSize * std::max(size_t(1), Compute::computes.size()),
+                 rayTracingPipelineProperties.shaderGroupBaseAlignment);
 
     // Uniform buffer descriptors for each geometry's record
     VkDescriptorBufferInfo uniformBufferDescriptor;
@@ -8240,8 +8197,8 @@ void Context::buildPipeline() {
     pushConstantRange.size = PUSH_CONSTANTS_LIMIT;
     pushConstantRange.offset = 0;
     pushConstantRange.stageFlags = VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                                    VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                                    VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR;
+      VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+      VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
     VkPipelineLayoutCreateInfo pipelineLayoutCI{};
     pipelineLayoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -8425,7 +8382,7 @@ void Context::buildPipeline() {
         raytracingPipeline = VK_NULL_HANDLE;
       }
       VkResult err = gprt::vkCreateRayTracingPipelines(logicalDevice, VK_NULL_HANDLE, VK_NULL_HANDLE, 1,
-                                                        &rayTracingPipelineCI, nullptr, &raytracingPipeline);
+                                                       &rayTracingPipelineCI, nullptr, &raytracingPipeline);
       if (err) {
         LOG_ERROR("failed to create ray tracing pipeline! Are all entrypoint names correct? \n" + errorString(err));
       }
@@ -8465,294 +8422,300 @@ void Context::buildPipeline() {
 
 
 GPRT_API
-int gprtFindSuitableDevices(int *usableDevices, int maxUsableToSearchFor)
-  {
-  VkInstance instance;
-    VkApplicationInfo appInfo;
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GPRT";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "GPRT";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
-    appInfo.pNext = VK_NULL_HANDLE;
+int gprtDeviceCount()
+{
+  return getUsableDevices().size();
+}
 
-    /// 1. Create Instance
-    std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-#endif
+// GPRT_API
+// int gprtFindSuitableDevices(int *usableDevices, int maxUsableToSearchFor)
+//   {
+//   VkInstance instance;
+//     VkApplicationInfo appInfo;
+//     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+//     appInfo.pApplicationName = "GPRT";
+//     appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+//     appInfo.pEngineName = "GPRT";
+//     appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+//     appInfo.apiVersion = VK_API_VERSION_1_2;
+//     appInfo.pNext = VK_NULL_HANDLE;
 
-    // Get extensions supported by the instance and store for later use
-    uint32_t instExtCount = 0;
-    std::vector<std::string> supportedInstanceExtensions;
-  std::vector<const char *> enabledDeviceExtensions;
-  std::vector<const char *> enabledInstanceExtensions;
-    vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
-    if (instExtCount > 0) {
-      std::vector<VkExtensionProperties> extensions(instExtCount);
-      if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
-        for (VkExtensionProperties extension : extensions) {
-          supportedInstanceExtensions.push_back(extension.extensionName);
-        }
-      }
-    }
+//     /// 1. Create Instance
+//     std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
+// #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+//     instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+//     instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+// #endif
 
-    // Enabled requested instance extensions
-    if (enabledInstanceExtensions.size() > 0) {
-      for (const char *enabledExtension : enabledInstanceExtensions) {
-        // Output message if requested extension is not available
-        if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
-            supportedInstanceExtensions.end()) {
-          std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
-        }
-        instanceExtensions.push_back(enabledExtension);
-      }
-    }
+//     // Get extensions supported by the instance and store for later use
+//     uint32_t instExtCount = 0;
+//     std::vector<std::string> supportedInstanceExtensions;
+//   std::vector<const char *> enabledDeviceExtensions;
+//   std::vector<const char *> enabledInstanceExtensions;
+//     vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
+//     if (instExtCount > 0) {
+//       std::vector<VkExtensionProperties> extensions(instExtCount);
+//       if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
+//         for (VkExtensionProperties extension : extensions) {
+//           supportedInstanceExtensions.push_back(extension.extensionName);
+//         }
+//       }
+//     }
 
-    VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
-    VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-    validationFeatures.disabledValidationFeatureCount = 0;
-    validationFeatures.enabledValidationFeatureCount = 1;
-    validationFeatures.pDisabledValidationFeatures = nullptr;
-    validationFeatures.pEnabledValidationFeatures = enabled;
+//     // Enabled requested instance extensions
+//     if (enabledInstanceExtensions.size() > 0) {
+//       for (const char *enabledExtension : enabledInstanceExtensions) {
+//         // Output message if requested extension is not available
+//         if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
+//             supportedInstanceExtensions.end()) {
+//           std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
+//         }
+//         instanceExtensions.push_back(enabledExtension);
+//       }
+//     }
 
-    VkInstanceCreateInfo instanceCreateInfo{};
-    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceCreateInfo.pApplicationInfo = &appInfo;
-    // instanceCreateInfo.pNext = VK_NULL_HANDLE;
+//     VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+//     VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+//     validationFeatures.disabledValidationFeatureCount = 0;
+//     validationFeatures.enabledValidationFeatureCount = 1;
+//     validationFeatures.pDisabledValidationFeatures = nullptr;
+//     validationFeatures.pEnabledValidationFeatures = enabled;
 
-    if (requestedFeatures.debugPrintf) {
-      instanceCreateInfo.pNext = &validationFeatures;
-    } else {
-      LOG_WARNING("Debug printf disabled");
-      instanceCreateInfo.pNext = VK_NULL_HANDLE;
-    }
+//     VkInstanceCreateInfo instanceCreateInfo{};
+//     instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+//     instanceCreateInfo.pApplicationInfo = &appInfo;
+//     // instanceCreateInfo.pNext = VK_NULL_HANDLE;
+
+//     if (requestedFeatures.debugPrintf) {
+//       instanceCreateInfo.pNext = &validationFeatures;
+//     } else {
+//       LOG_WARNING("Debug printf disabled");
+//       instanceCreateInfo.pNext = VK_NULL_HANDLE;
+//     }
 
 
-    // uint32_t glfwExtensionCount = 0;
-    // const char **glfwExtensions;
-    // if (requestedFeatures.window) {
-    //   if (!glfwInit()) {
-    //     LOG_WARNING("Unable to create window. Falling back to headless mode.");
-    //     requestedFeatures.window = false;
-    //   } else {
-    //     if (!glfwVulkanSupported()) {
-    //       LOG_ERROR("Window requested but unsupported!");
-    //     }
-    //     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-    //     for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
-    //       instanceExtensions.push_back(glfwExtensions[i]);
-    //     }
-    //   }
-    // }
+//     // uint32_t glfwExtensionCount = 0;
+//     // const char **glfwExtensions;
+//     // if (requestedFeatures.window) {
+//     //   if (!glfwInit()) {
+//     //     LOG_WARNING("Unable to create window. Falling back to headless mode.");
+//     //     requestedFeatures.window = false;
+//     //   } else {
+//     //     if (!glfwVulkanSupported()) {
+//     //       LOG_ERROR("Window requested but unsupported!");
+//     //     }
+//     //     glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+//     //     for (uint32_t i = 0; i < glfwExtensionCount; ++i) {
+//     //       instanceExtensions.push_back(glfwExtensions[i]);
+//     //     }
+//     //   }
+//     // }
 
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
+// #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+//     instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+// #endif
 
-    // Useful to disable, since some profiling tools don't support this.
-    if (requestedFeatures.debugPrintf) {
-      instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
+//     // Useful to disable, since some profiling tools don't support this.
+//     if (requestedFeatures.debugPrintf) {
+//       instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+//     }
 
-    if (instanceExtensions.size() > 0) {
-      instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
-      instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
-    }
+//     if (instanceExtensions.size() > 0) {
+//       instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
+//       instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+//     }
 
     
-    // need this for printf to work
-    const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
-    instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
-    instanceCreateInfo.enabledLayerCount = 1;
+//     // need this for printf to work
+//     const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
+//     instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
+//     instanceCreateInfo.enabledLayerCount = 1;
 
-    VkResult err;
+//     VkResult err;
 
-    err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
-    if (err) {
-      LOG_ERROR("failed to create instance! : \n" + errorString(err));
-    }
+//     err = vkCreateInstance(&instanceCreateInfo, nullptr, &instance);
+//     if (err) {
+//       LOG_ERROR("failed to create instance! : \n" + errorString(err));
+//     }
 
-    // Setup debug printf callback
-    if (requestedFeatures.debugPrintf) {
-      gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
-          vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
-      gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
-          vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
+//     // Setup debug printf callback
+//     if (requestedFeatures.debugPrintf) {
+//       gprt::vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+//           vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT"));
+//       gprt::vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+//           vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT"));
 
-      VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
-      debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-      debugUtilsMessengerCI.messageSeverity = 
-          // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
-        // | VK_DEBUG_REPORT_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_ERROR_BIT_EXT
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT
-        ;
-      debugUtilsMessengerCI.messageType =
-          VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-      debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
-      VkResult result =
-          gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
-      assert(result == VK_SUCCESS);
-    }
+//       VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
+//       debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+//       debugUtilsMessengerCI.messageSeverity = 
+//           // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
+//         // | VK_DEBUG_REPORT_WARNING_BIT_EXT
+//         // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
+//         // | VK_DEBUG_REPORT_ERROR_BIT_EXT
+//         VK_DEBUG_REPORT_DEBUG_BIT_EXT
+//         ;
+//       debugUtilsMessengerCI.messageType =
+//           VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+//       debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
+//       VkResult result =
+//           gprt::vkCreateDebugUtilsMessengerEXT(instance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+//       assert(result == VK_SUCCESS);
+//     }
 
-    /// 2. Select a Physical Device
+//     /// 2. Select a Physical Device
     
-    // Physical device
-    uint32_t gpuCount = 0;
-    // Get number of available physical devices
-    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
-    if (gpuCount == 0) {
-      LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
-    }
-    // Enumerate devices
-    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
-    err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
-    if (err) {
-      LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
-    }
+//     // Physical device
+//     uint32_t gpuCount = 0;
+//     // Get number of available physical devices
+//     VK_CHECK_RESULT(vkEnumeratePhysicalDevices(instance, &gpuCount, nullptr));
+//     if (gpuCount == 0) {
+//       LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
+//     }
+//     // Enumerate devices
+//     std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+//     err = vkEnumeratePhysicalDevices(instance, &gpuCount, physicalDevices.data());
+//     if (err) {
+//       LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
+//     }
 
-    // GPU selection
+//     // GPU selection
 
-    auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
-      switch (type) {
-#define STR(r)                                                                                                         \
-  case VK_PHYSICAL_DEVICE_TYPE_##r:                                                                                    \
-    return #r
-        STR(OTHER);
-        STR(INTEGRATED_GPU);
-        STR(DISCRETE_GPU);
-        STR(VIRTUAL_GPU);
-        STR(CPU);
-#undef STR
-      default:
-        return "UNKNOWN_DEVICE_TYPE";
-      }
-    };
+//     auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
+//       switch (type) {
+// #define STR(r)                                                                                                         \
+//   case VK_PHYSICAL_DEVICE_TYPE_##r:                                                                                    \
+//     return #r
+//         STR(OTHER);
+//         STR(INTEGRATED_GPU);
+//         STR(DISCRETE_GPU);
+//         STR(VIRTUAL_GPU);
+//         STR(CPU);
+// #undef STR
+//       default:
+//         return "UNKNOWN_DEVICE_TYPE";
+//       }
+//     };
 
-    auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
-      return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
-              supportedExtensions.end());
-    };
+//     auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
+//       return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
+//               supportedExtensions.end());
+//     };
 
-    /* function that checks if the selected physical device meets requirements
-     */
-    auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
-      uint32_t extensionCount;
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+//     /* function that checks if the selected physical device meets requirements
+//      */
+//     auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
+//       uint32_t extensionCount;
+//       vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
-      std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+//       std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+//       vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
 
-      std::set<std::string> requiredExtensions;
-      for (auto &cstr : deviceExtensions) {
-        requiredExtensions.insert(std::string(cstr));
-      }
+//       std::set<std::string> requiredExtensions;
+//       for (auto &cstr : deviceExtensions) {
+//         requiredExtensions.insert(std::string(cstr));
+//       }
 
-      for (const auto &extension : availableExtensions) {
-        requiredExtensions.erase(extension.extensionName);
-      }
+//       for (const auto &extension : availableExtensions) {
+//         requiredExtensions.erase(extension.extensionName);
+//       }
 
-      return requiredExtensions.empty();
-    };
+//       return requiredExtensions.empty();
+//     };
 
-    // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
-    // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
-    // components, without additional requirements.
-    enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
+//     // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
+//     // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
+//     // components, without additional requirements.
+//     enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
 
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+//     // Ray tracing related extensions required
+//     enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
 
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+//     // Ray tracing related extensions required
+//     enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+//     enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
 
-    // Required by VK_KHR_acceleration_structure
-    enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+//     // Required by VK_KHR_acceleration_structure
+//     enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+//     enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+//     enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+//     enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
-    // Required for VK_KHR_ray_tracing_pipeline
-    enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+//     // Required for VK_KHR_ray_tracing_pipeline
+//     enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
     
-    // required for vulkan memory model stuff
-    enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
+//     // required for vulkan memory model stuff
+//     enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
 
-    // Required by VK_KHR_spirv_1_4
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+//     // Required by VK_KHR_spirv_1_4
+//     enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 
-    // if (requestedFeatures.window) {
-    //   // If the device will be used for presenting to a display via a swapchain
-    //   // we need to request the swapchain extension
-    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    // }
+//     // if (requestedFeatures.window) {
+//     //   // If the device will be used for presenting to a display via a swapchain
+//     //   // we need to request the swapchain extension
+//     //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+//     // }
 
-    if (requestedFeatures.rayQueries) {
-      // If the device will be using ray queries for inline ray tracing,
-      // we need to explicitly request this.
-      enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-    }
+//     if (requestedFeatures.rayQueries) {
+//       // If the device will be using ray queries for inline ray tracing,
+//       // we need to explicitly request this.
+//       enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+//     }
 
-    if (requestedFeatures.invocationReordering) {
-      enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
-    }
+//     if (requestedFeatures.invocationReordering) {
+//       enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+//     }
 
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-#endif
+// #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+//     enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+// #endif
 
-    // Select physical device to be used
-    // Defaults to the first device unless specified by command line
-    // uint32_t selectedDevice = -1;   // TODO
+//     // Select physical device to be used
+//     // Defaults to the first device unless specified by command line
+//     // uint32_t selectedDevice = -1;   // TODO
 
-    // std::vector<uint32_t> usableDevices;
-    // uint32_t *usableDevices 
-    int numUsableFound = 0;
-    LOG_INFO("Searching for usable Vulkan physical device...");
-    for (uint32_t i = 0; i < gpuCount && numUsableFound < maxUsableToSearchFor; i++) {
-      VkPhysicalDeviceProperties deviceProperties;
-      vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
-      std::string message =
-          std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
-      message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
-      message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
-                 std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
-                 std::to_string(deviceProperties.apiVersion & 0xfff);
-      LOG_INFO(message);
+//     // std::vector<uint32_t> usableDevices;
+//     // uint32_t *usableDevices 
+//     int numUsableFound = 0;
+//     LOG_INFO("Searching for usable Vulkan physical device...");
+//     for (uint32_t i = 0; i < gpuCount && numUsableFound < maxUsableToSearchFor; i++) {
+//       VkPhysicalDeviceProperties deviceProperties;
+//       vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
+//       std::string message =
+//           std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
+//       message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
+//       message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
+//                  std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
+//                  std::to_string(deviceProperties.apiVersion & 0xfff);
+//       LOG_INFO(message);
 
-      if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
-        usableDevices[numUsableFound++] = i;
-        // usableDevices.push_back(i);
-        LOG_INFO("\tFound usable device");
-      } else {
-        // Get list of supported extensions
-        uint32_t devExtCount = 0;
-        vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(devExtCount);
-        std::vector<std::string> supportedExtensions;
-        if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
-            VK_SUCCESS) {
-          for (auto ext : extensions) {
-            supportedExtensions.push_back(ext.extensionName);
-          }
-        }
+//       if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
+//         usableDevices[numUsableFound++] = i;
+//         // usableDevices.push_back(i);
+//         LOG_INFO("\tFound usable device");
+//       } else {
+//         // Get list of supported extensions
+//         uint32_t devExtCount = 0;
+//         vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
+//         std::vector<VkExtensionProperties> extensions(devExtCount);
+//         std::vector<std::string> supportedExtensions;
+//         if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
+//             VK_SUCCESS) {
+//           for (auto ext : extensions) {
+//             supportedExtensions.push_back(ext.extensionName);
+//           }
+//         }
 
-        for (const char *enabledExtension : enabledDeviceExtensions) {
-          if (!extensionSupported(enabledExtension, supportedExtensions)) {
-            LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
-                                                                             << "\" is not present.");
-          }
-        }
-      }
-    }
-    return numUsableFound;
-  }
+//         for (const char *enabledExtension : enabledDeviceExtensions) {
+//           if (!extensionSupported(enabledExtension, supportedExtensions)) {
+//             LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
+//                                                                              << "\" is not present.");
+//           }
+//         }
+//       }
+//     }
+//     return numUsableFound;
+//   }
   
 
 
@@ -9158,9 +9121,9 @@ gprtRequestRecordSize(uint32_t recordSize) {
 // }
 
 GPRT_API GPRTContext
-gprtContextCreate(int32_t *requestedDeviceIDs, int numRequestedDevices) {
+gprtContextCreate(int32_t requestedDeviceID) {
   LOG_API_CALL();
-  Context *context = new Context(requestedDeviceIDs, numRequestedDevices);
+  Context *context = new Context(requestedDeviceID);
   return (GPRTContext) context;
 }
 
@@ -9308,19 +9271,19 @@ gprtGeomTypeRasterize(GPRTContext _context, GPRTGeomType _geomType, uint32_t num
   if (pushConstantsSize > 0) {
     if (pushConstantsSize > PUSH_CONSTANTS_LIMIT) LOG_ERROR("Push constants size exceeds maximum PUSH_CONSTANTS_LIMIT byte limit!");
     vkCmdPushConstants(context->graphicsCommandBuffer, geometryType->raster[rasterType].pipelineLayout,
-                      VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
+                       VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, pushConstantsSize, pushConstants);
   }
 
   // Transition our attachments into optimal attachment formats
   geometryType->raster[rasterType].colorAttachment->setImageLayout(
-      context->graphicsCommandBuffer, geometryType->raster[rasterType].colorAttachment->image,
-      geometryType->raster[rasterType].colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-      {VK_IMAGE_ASPECT_COLOR_BIT, 0, geometryType->raster[rasterType].colorAttachment->mipLevels, 0, 1});
+                                                                   context->graphicsCommandBuffer, geometryType->raster[rasterType].colorAttachment->image,
+                                                                   geometryType->raster[rasterType].colorAttachment->layout, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                                                                   {VK_IMAGE_ASPECT_COLOR_BIT, 0, geometryType->raster[rasterType].colorAttachment->mipLevels, 0, 1});
 
   geometryType->raster[rasterType].depthAttachment->setImageLayout(
-      context->graphicsCommandBuffer, geometryType->raster[rasterType].depthAttachment->image,
-      geometryType->raster[rasterType].depthAttachment->layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-      {VK_IMAGE_ASPECT_DEPTH_BIT, 0, geometryType->raster[rasterType].depthAttachment->mipLevels, 0, 1});
+                                                                   context->graphicsCommandBuffer, geometryType->raster[rasterType].depthAttachment->image,
+                                                                   geometryType->raster[rasterType].depthAttachment->layout, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+                                                                   {VK_IMAGE_ASPECT_DEPTH_BIT, 0, geometryType->raster[rasterType].depthAttachment->mipLevels, 0, 1});
 
   // This will clear the color and depth attachment
   vkCmdBeginRenderPass(context->graphicsCommandBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -9369,8 +9332,8 @@ gprtGeomTypeRasterize(GPRTContext _context, GPRTGeomType _geomType, uint32_t num
       }
 
       std::vector<VkDescriptorSet> descriptorSets = {
-          context->rasterRecordDescriptorSet, context->samplerDescriptorSet,   context->texture1DDescriptorSet, 
-          context->texture2DDescriptorSet,    context->texture3DDescriptorSet, context->bufferDescriptorSet   };
+        context->rasterRecordDescriptorSet, context->samplerDescriptorSet,   context->texture1DDescriptorSet, 
+        context->texture2DDescriptorSet,    context->texture3DDescriptorSet, context->bufferDescriptorSet   };
 
       uint32_t offset = (uint32_t)geom->address * recordSize;
       vkCmdBindDescriptorSets(context->graphicsCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -9385,14 +9348,14 @@ gprtGeomTypeRasterize(GPRTContext _context, GPRTGeomType _geomType, uint32_t num
 
   // At the end of the renderpass, we'll transition the layout back to it's previous layout
   geometryType->raster[rasterType].colorAttachment->setImageLayout(
-      context->graphicsCommandBuffer, geometryType->raster[rasterType].colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-      geometryType->raster[rasterType].colorAttachment->layout,
-      {VK_IMAGE_ASPECT_COLOR_BIT, 0, geometryType->raster[rasterType].colorAttachment->mipLevels, 0, 1});
+                                                                   context->graphicsCommandBuffer, geometryType->raster[rasterType].colorAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+                                                                   geometryType->raster[rasterType].colorAttachment->layout,
+                                                                   {VK_IMAGE_ASPECT_COLOR_BIT, 0, geometryType->raster[rasterType].colorAttachment->mipLevels, 0, 1});
 
   geometryType->raster[rasterType].depthAttachment->setImageLayout(
-      context->graphicsCommandBuffer, geometryType->raster[rasterType].depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
-      geometryType->raster[rasterType].depthAttachment->layout,
-      {VK_IMAGE_ASPECT_DEPTH_BIT, 0, geometryType->raster[rasterType].depthAttachment->mipLevels, 0, 1});
+                                                                   context->graphicsCommandBuffer, geometryType->raster[rasterType].depthAttachment->image, VK_IMAGE_LAYOUT_GENERAL,
+                                                                   geometryType->raster[rasterType].depthAttachment->layout,
+                                                                   {VK_IMAGE_ASPECT_DEPTH_BIT, 0, geometryType->raster[rasterType].depthAttachment->mipLevels, 0, 1});
 
   err = vkEndCommandBuffer(context->graphicsCommandBuffer);
   if (err)
@@ -9841,17 +9804,17 @@ gprtHostTextureCreate(GPRTContext _context, GPRTImageType type, GPRTFormat forma
   LOG_API_CALL();
 
   const VkImageUsageFlags imageUsageFlags =
-      // means we can make an image view required to assign this image to a
-      // descriptor
-      VK_IMAGE_USAGE_SAMPLED_BIT |
-      // means we can use this image to transfer into another
-      VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this image to receive data transferred from another
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    // means we can make an image view required to assign this image to a
+    // descriptor
+    VK_IMAGE_USAGE_SAMPLED_BIT |
+    // means we can use this image to transfer into another
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this image to receive data transferred from another
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags =
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with vkMapMemory
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and "invalidate"
-                                              // not needed
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with vkMapMemory
+    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and "invalidate"
+  // not needed
 
   Context *context = (Context *) _context;
   Texture *texture = new Texture(context->physicalDevice, context->logicalDevice, context->graphicsCommandBuffer,
@@ -9870,13 +9833,13 @@ gprtDeviceTextureCreate(GPRTContext _context, GPRTImageType type, GPRTFormat for
   LOG_API_CALL();
 
   const VkImageUsageFlags imageUsageFlags =
-      // means we can make an image view required to assign this image to a
-      // descriptor
-      VK_IMAGE_USAGE_SAMPLED_BIT |
-      // means we can use this image to transfer into another
-      VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this image to receive data transferred from another
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    // means we can make an image view required to assign this image to a
+    // descriptor
+    VK_IMAGE_USAGE_SAMPLED_BIT |
+    // means we can use this image to transfer into another
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this image to receive data transferred from another
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;   // means most efficient for
                                                                                         // device access
 
@@ -9894,19 +9857,19 @@ gprtSharedTextureCreate(GPRTContext _context, GPRTImageType type, GPRTFormat for
   LOG_API_CALL();
 
   const VkImageUsageFlags imageUsageFlags =
-      // means we can make an image view required to assign this image to a
-      // descriptor
-      VK_IMAGE_USAGE_SAMPLED_BIT |
-      // means we can use this image to transfer into another
-      VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this image to receive data transferred from another
-      VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    // means we can make an image view required to assign this image to a
+    // descriptor
+    VK_IMAGE_USAGE_SAMPLED_BIT |
+    // means we can use this image to transfer into another
+    VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this image to receive data transferred from another
+    VK_IMAGE_USAGE_TRANSFER_DST_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags =
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |    // mappable to host with vkMapMemory
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |   // means "flush" and "invalidate"
-                                               // not needed
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;     // means most efficient for device
-                                               // access
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |    // mappable to host with vkMapMemory
+    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |   // means "flush" and "invalidate"
+    // not needed
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;     // means most efficient for device
+  // access
 
   Context *context = (Context *) _context;
   Texture *texture = new Texture(context->physicalDevice, context->logicalDevice, context->graphicsCommandBuffer,
@@ -9987,27 +9950,27 @@ GPRT_API GPRTBuffer
 gprtHostBufferCreate(GPRTContext _context, size_t size, size_t count, const void *init, size_t alignment) {
   LOG_API_CALL();
   const VkBufferUsageFlags bufferUsageFlags =
-      // means we can get this buffer's address with vkGetBufferDeviceAddress
-      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-      // I guess I need this to use these buffers as input to tree builds?
-      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-      // means we can use this buffer to transfer into another
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this buffer to receive data transferred from another
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-      // means we can use this buffer as an index buffer for rasterization
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-      // means we can use this buffer as a storage buffer resource
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    // means we can get this buffer's address with vkGetBufferDeviceAddress
+    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+    // I guess I need this to use these buffers as input to tree builds?
+    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+    // means we can use this buffer to transfer into another
+    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this buffer to receive data transferred from another
+    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+    // means we can use this buffer as an index buffer for rasterization
+    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+    // means we can use this buffer as a storage buffer resource
+    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags =
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with vkMapMemory
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and "invalidate"
-                                              // not needed
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |   // mappable to host with vkMapMemory
+    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;   // means "flush" and "invalidate"
+  // not needed
 
   Context *context = (Context *) _context;
   Buffer *buffer =
-      new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer,
-                 context->graphicsQueue, bufferUsageFlags, memoryUsageFlags, size * count, alignment);
+    new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer,
+               context->graphicsQueue, bufferUsageFlags, memoryUsageFlags, size * count, alignment);
 
   // Pin the buffer to the host
   buffer->map();
@@ -10023,32 +9986,32 @@ GPRT_API GPRTBuffer
 gprtDeviceBufferCreate(GPRTContext _context, size_t size, size_t count, const void *init, size_t alignment) {
   LOG_API_CALL();
   const VkBufferUsageFlags bufferUsageFlags =
-      // means we can get this buffer's address with vkGetBufferDeviceAddress
-      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-      // I guess I need this to use these buffers as input to tree builds?
-      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-      // means we can use this buffer to transfer into another
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this buffer to receive data transferred from another
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-      // means we can use this buffer as an index buffer for rasterization
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-      // means we can use this buffer as a storage buffer resource
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    // means we can get this buffer's address with vkGetBufferDeviceAddress
+    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+    // I guess I need this to use these buffers as input to tree builds?
+    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+    // means we can use this buffer to transfer into another
+    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this buffer to receive data transferred from another
+    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+    // means we can use this buffer as an index buffer for rasterization
+    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+    // means we can use this buffer as a storage buffer resource
+    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
   // means most efficient for device access
 
   Context *context = (Context *) _context;
   Buffer *buffer =
-      new Buffer(context->physicalDevice,
-                 context->logicalDevice,
-                 context->allocator,
-                 context->graphicsCommandBuffer,
-                 context->graphicsQueue,
-                 bufferUsageFlags,
-                 memoryUsageFlags,
-                 size * count,
-                 alignment);
+    new Buffer(context->physicalDevice,
+               context->logicalDevice,
+               context->allocator,
+               context->graphicsCommandBuffer,
+               context->graphicsQueue,
+               bufferUsageFlags,
+               memoryUsageFlags,
+               size * count,
+               alignment);
 
   if (init) {
     buffer->map();
@@ -10063,29 +10026,29 @@ GPRT_API GPRTBuffer
 gprtSharedBufferCreate(GPRTContext _context, size_t size, size_t count, const void *init, size_t alignment) {
   LOG_API_CALL();
   const VkBufferUsageFlags bufferUsageFlags =
-      // means we can get this buffer's address with vkGetBufferDeviceAddress
-      VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
-      // I guess I need this to use these buffers as input to tree builds?
-      VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
-      // means we can use this buffer to transfer into another
-      VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
-      // means we can use this buffer to receive data transferred from another
-      VK_BUFFER_USAGE_TRANSFER_DST_BIT |
-      // means we can use this buffer as an index buffer for rasterization
-      VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
-      // means we can use this buffer as a storage buffer resource
-      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    // means we can get this buffer's address with vkGetBufferDeviceAddress
+    VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
+    // I guess I need this to use these buffers as input to tree builds?
+    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR |
+    // means we can use this buffer to transfer into another
+    VK_BUFFER_USAGE_TRANSFER_SRC_BIT |
+    // means we can use this buffer to receive data transferred from another
+    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+    // means we can use this buffer as an index buffer for rasterization
+    VK_BUFFER_USAGE_INDEX_BUFFER_BIT |
+    // means we can use this buffer as a storage buffer resource
+    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
   const VkMemoryPropertyFlags memoryUsageFlags =
-      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |    // mappable to host with vkMapMemory
-      VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |   // means "flush" and "invalidate"
-                                               // not needed
-      VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;     // means most efficient for device
-                                               // access
+    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |    // mappable to host with vkMapMemory
+    VK_MEMORY_PROPERTY_HOST_COHERENT_BIT |   // means "flush" and "invalidate"
+    // not needed
+    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;     // means most efficient for device
+  // access
 
   Context *context = (Context *) _context;
   Buffer *buffer =
-      new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer,
-                 context->graphicsQueue, bufferUsageFlags, memoryUsageFlags, size * count, alignment);
+    new Buffer(context->physicalDevice, context->logicalDevice, context->allocator, context->graphicsCommandBuffer,
+               context->graphicsQueue, bufferUsageFlags, memoryUsageFlags, size * count, alignment);
 
   // Pin the buffer to the host
   buffer->map();
@@ -10126,6 +10089,13 @@ gprtBufferGetPointer(GPRTBuffer _buffer, int deviceID) {
   LOG_API_CALL();
   Buffer *buffer = (Buffer *) _buffer;
   return buffer->mapped;
+}
+
+GPRT_API void *
+gprtBufferGetDeviceAddress(GPRTBuffer _buffer) {
+  LOG_API_CALL();
+  Buffer *buffer = (Buffer *) _buffer;
+  return (void *)buffer->getDeviceAddress();
 }
 
 GPRT_API void
@@ -10446,8 +10416,8 @@ bufferSort(GPRTContext _context, GPRTBuffer _keys, GPRTBuffer _values, GPRTBuffe
 
     // UAV barrier on the sum table
     Barriers[0] =
-        BufferTransition(scratch->buffer, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                         VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, scratchOffset, scratchBufferSize);
+      BufferTransition(scratch->buffer, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                       VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, scratchOffset, scratchBufferSize);
     vkCmdPipelineBarrier(commandList, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0,
                          nullptr, 1, Barriers, 0, nullptr);
 
@@ -10489,8 +10459,8 @@ bufferSort(GPRTContext _context, GPRTBuffer _keys, GPRTBuffer _values, GPRTBuffe
 
     // UAV barrier on the sum table
     Barriers[0] =
-        BufferTransition(scratch->buffer, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-                         VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, scratchOffset, scratchBufferSize);
+      BufferTransition(scratch->buffer, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+                       VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT, scratchOffset, scratchBufferSize);
     vkCmdPipelineBarrier(commandList, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0,
                          nullptr, 1, Barriers, 0, nullptr);
 
@@ -10498,7 +10468,7 @@ bufferSort(GPRTContext _context, GPRTBuffer _keys, GPRTBuffer _values, GPRTBuffe
     {
       vkCmdBindPipeline(commandList, VK_PIPELINE_BIND_POINT_COMPUTE,
                         bHasPayload ? context->sortStages.ScatterPayload.pipeline
-                                    : context->sortStages.Scatter.pipeline);
+                        : context->sortStages.Scatter.pipeline);
       vkCmdDispatch(commandList, NumThreadgroupsToRun, 1, 1);
     }
 
@@ -10626,7 +10596,7 @@ gprtInstanceAccelCreate(GPRTContext _context, uint32_t numAccels, GPRTAccel *arr
   LOG_API_CALL();
   Context *context = (Context *) _context;
   InstanceAccel *accel =
-      new InstanceAccel(context, numAccels, arrayOfAccels);
+    new InstanceAccel(context, numAccels, arrayOfAccels);
   context->accels.push_back(accel);
 
   // Creating an instance acceleration structure will introduce geom records into
@@ -10756,10 +10726,10 @@ gprtRayGenLaunch3D(GPRTContext _context, GPRTRayGen _rayGen, uint32_t dims_x, ui
   if (pushConstantsSize > 0) {
     if (pushConstantsSize > PUSH_CONSTANTS_LIMIT) LOG_ERROR("Push constants size exceeds maximum PUSH_CONSTANTS_LIMIT byte limit!");
     vkCmdPushConstants(context->graphicsCommandBuffer, context->raytracingPipelineLayout,
-                        VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
-                        VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
-                        VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
-                      0, pushConstantsSize, pushConstants);
+                       VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR | VK_SHADER_STAGE_ANY_HIT_BIT_KHR |
+                       VK_SHADER_STAGE_INTERSECTION_BIT_KHR | VK_SHADER_STAGE_MISS_BIT_KHR |
+                       VK_SHADER_STAGE_CALLABLE_BIT_KHR | VK_SHADER_STAGE_RAYGEN_BIT_KHR,
+                       0, pushConstantsSize, pushConstants);
   }
 
   auto getBufferDeviceAddress = [](VkDevice device, VkBuffer buffer) -> uint64_t {
@@ -10781,11 +10751,11 @@ gprtRayGenLaunch3D(GPRTContext _context, GPRTRayGen _rayGen, uint32_t dims_x, ui
   const uint32_t recordSize = alignedSize(std::min(maxGroupSize, requestedFeatures.recordSize), groupAlignment);
   uint64_t raygenBaseAddr = getBufferDeviceAddress(context->logicalDevice, context->raygenTable->buffer);
   uint64_t missBaseAddr =
-      (context->missTable) ? getBufferDeviceAddress(context->logicalDevice, context->missTable->buffer) : 0;
+    (context->missTable) ? getBufferDeviceAddress(context->logicalDevice, context->missTable->buffer) : 0;
   uint64_t callableBaseAddr =
-      (context->callableTable) ? getBufferDeviceAddress(context->logicalDevice, context->callableTable->buffer) : 0;
+    (context->callableTable) ? getBufferDeviceAddress(context->logicalDevice, context->callableTable->buffer) : 0;
   uint64_t hitgroupBaseAddr =
-      (context->hitgroupTable) ? getBufferDeviceAddress(context->logicalDevice, context->hitgroupTable->buffer) : 0;
+    (context->hitgroupTable) ? getBufferDeviceAddress(context->logicalDevice, context->hitgroupTable->buffer) : 0;
 
   // find raygen in current list of raygens
   int raygenOffset = 0;
@@ -10882,8 +10852,8 @@ void _gprtComputeLaunch(GPRTCompute _compute, uint3 numGroups, uint3 groupSize, 
   const uint32_t maxShaderRecordStride = context->rayTracingPipelineProperties.maxShaderGroupStride;
 
   std::vector<VkDescriptorSet> descriptorSets = {context->computeRecordDescriptorSet, context->samplerDescriptorSet,
-                                                context->texture1DDescriptorSet, context->texture2DDescriptorSet, 
-                                                context->texture3DDescriptorSet, context->bufferDescriptorSet};
+                                                 context->texture1DDescriptorSet, context->texture2DDescriptorSet, 
+                                                 context->texture3DDescriptorSet, context->bufferDescriptorSet};
 
   const uint32_t recordSize = alignedSize(std::min(maxGroupSize, requestedFeatures.recordSize), groupAlignment);
   uint32_t offset = (uint32_t)compute->address * recordSize;
@@ -10892,7 +10862,7 @@ void _gprtComputeLaunch(GPRTCompute _compute, uint3 numGroups, uint3 groupSize, 
 
   if (pushConstants.size() > 0) {
     vkCmdPushConstants(context->graphicsCommandBuffer, compute->pipelineLayout,
-                      VK_SHADER_STAGE_COMPUTE_BIT, 0, PUSH_CONSTANTS_LIMIT, pushConstants.data());
+                       VK_SHADER_STAGE_COMPUTE_BIT, 0, PUSH_CONSTANTS_LIMIT, pushConstants.data());
   }
 
   vkCmdDispatch(context->graphicsCommandBuffer, uint32_t(numGroups[0]), uint32_t(numGroups[1]), uint32_t(numGroups[2]));

@@ -633,31 +633,34 @@ GPRT_API void gprtRequestRayTypeCount(uint32_t numRayTypes);
  Currently defaults to 31. */
 GPRT_API void gprtRequestRayRecursionDepth(uint32_t rayRecursionDepth);
 
+/*! returns the number of *usable* devices that this library could use.
+
+  E.g., A machine might have two ray tracing capable GPUs, but also a
+  maybe not ray tracing capable vulkan device for the CPU, one for an
+  llvm pipe, and whatever else. On said machine, this function would
+  return '2', and the device IDs passed to contextCreatre() would be
+  '0' and '1', no matter what other (non-usable) vulkan devices the
+  machine might have
+ */
 GPRT_API
-int gprtFindSuitableDevices(int *usableDevices,
-                            int maxUsableToSearchFor);
+int gprtDeviceCount();
+
+// GPRT_API
+// int gprtFindSuitableDevices(int *usableDevices,
+//                             int maxUsableToSearchFor);
 
 /*! Requests that ray queries be enabled for inline ray tracing support. */
 GPRT_API void gprtRequestRayQueries();
 
-/** creates a new device context with the given list of devices.
+/*! creates a new device context with the given (usable) device ID.
 
-  If requested device IDs list if null it implicitly refers to the
-  list "0,1,2,...."; if numDevices <= 0 it automatically refers to
-  "all devices you can find". Examples:
-
-  - gprtContextCreate(nullptr,1) creates one device on the first GPU
-
-  - gprtContextCreate(nullptr,0) creates a context across all GPUs in
-  the system
-
-  - int gpu=2;gprtContextCreate(&gpu,1) will create a context on GPU #2
-  (where 2 refers to the vulkan device ordinal; from
-  gprt's standpoint (eg, during gprtBufferGetPointer() this GPU will
-  from that point on be known as device #0 */
+    "Usable" devices are those that support all the extensions we need
+    for this library; so usable device ID "0" is always the first GPU
+    we could use, usable device ID "1" is the second, etc. To query
+    how many usable devices a system has, use @ref gprtDeviceCount()
+ */
 GPRT_API
-GPRTContext gprtContextCreate(int32_t *requestedDeviceIDs GPRT_IF_CPP(= nullptr),
-                              int numDevices GPRT_IF_CPP(= 1));
+GPRTContext gprtContextCreate(int32_t requestedDeviceID);
 
 GPRT_API
 void gprtContextDestroy(GPRTContext context);
@@ -1768,6 +1771,14 @@ size_t
 gprtBufferGetSize(GPRTBufferOf<T> buffer) {
   return gprtBufferGetSize((GPRTBuffer) buffer);
 }
+
+
+GPRT_API void *
+gprtBufferGetDeviceAddress(GPRTBuffer _buffer);
+
+template<typename T>
+T *gprtBufferGetDeviceAddress(GPRTBufferOf<T> _buffer)
+{ return (T*)gprtBufferGetDeviceAddress((GPRTBuffer)_buffer); }
 
 /*! returns the device pointer of the given pointer for the given
   device ID. For host-pinned or managed memory buffers (where the
