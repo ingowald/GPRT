@@ -852,9 +852,7 @@ VkDeviceAddress Buffer::getDeviceAddress()
   VkBufferDeviceAddressInfoKHR info = {};
   info.sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR;
   info.buffer = buffer;
-  PING; PRINT(device); PRINT(&info);
   VkDeviceAddress addr = gprt::vkGetBufferDeviceAddress(device, &info);
-  PING; PRINT((int*)addr);
   return addr;
 }
 
@@ -863,7 +861,6 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAlloc
                VkMemoryPropertyFlags _memoryPropertyFlags, VkDeviceSize _size, VkDeviceSize _alignment,
                void *data)
 {
-  PING;
 
   // Hunt for an existing free virtual address for this buffer
   for (uint32_t i = 0; i < Buffer::buffers.size(); ++i) {
@@ -913,7 +910,6 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAlloc
   } else {
     allocInfo.usage = VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
   }
-  PING;
   VK_CHECK_RESULT(vmaCreateBufferWithAlignment(allocator, &bufferCreateInfo, &allocInfo, alignment, &buffer,
                                                &allocation, nullptr));
 
@@ -940,7 +936,6 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAlloc
                                                  &stagingBuffer.buffer, &stagingBuffer.allocation, nullptr));
   }
 
-  PING;
   // If a pointer to the buffer data has been passed, map the buffer and
   // copy over the data
   if (data != nullptr) {
@@ -949,11 +944,9 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAlloc
     unmap();
   }
 
-  PING;
   // means we can get this buffer's address with vkGetBufferDeviceAddress
   if ((usageFlags & VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT) != 0)
     deviceAddress = getDeviceAddress();
-  PING;
 }
 
 std::vector<Buffer *> Buffer::buffers;
@@ -2860,7 +2853,6 @@ VkInstance globalInstance;
 
   std::vector<VkPhysicalDevice> getUsableDevices()
   {
-    PING;
     static std::vector<VkPhysicalDevice> usableDevices;
     static bool alreadyQueried = false;
     if (alreadyQueried) return usableDevices;
@@ -3132,7 +3124,6 @@ VkInstance globalInstance;
         //   }
       }
     }
-    PING; PRINT(usableDevices.size());
     return usableDevices;
   }
 
@@ -3378,7 +3369,6 @@ struct Context {
     // the physical device Device properties also contain limits and sparse
     // properties
     vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
-    PING;
 
     subgroupProperties = {};
     subgroupProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
@@ -3391,10 +3381,8 @@ struct Context {
     deviceProperties2 = {};
     deviceProperties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
     deviceProperties2.pNext = &rayTracingPipelineProperties;
-    PING;
     PRINT(physicalDevice);
     vkGetPhysicalDeviceProperties2(physicalDevice, &deviceProperties2);
-    PING;
 
     // Features should be checked by the end application before using them
     VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV invocationReorderFeatures{};
@@ -3402,7 +3390,6 @@ struct Context {
     invocationReorderFeatures.rayTracingInvocationReorder = requestedFeatures.invocationReordering;
     invocationReorderFeatures.pNext = nullptr;
 
-    PING;
     VkPhysicalDeviceAccelerationStructureFeaturesKHR accelerationStructureFeatures{};
     accelerationStructureFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
     accelerationStructureFeatures.pNext = &invocationReorderFeatures;
@@ -3414,7 +3401,6 @@ struct Context {
     VkPhysicalDeviceRayQueryFeaturesKHR rtQueryFeatures{};
     rtQueryFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
     rtQueryFeatures.pNext = &rtPipelineFeatures;
-    PING;
 
     deviceVulkan12Features = {};
     deviceVulkan12Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
@@ -3437,14 +3423,12 @@ struct Context {
 
     // Queue family properties, used for setting up requested queues upon device
     // creation
-    PING;
     uint32_t queueFamilyCount;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
     assert(queueFamilyCount > 0);
     queueFamilyProperties.resize(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, queueFamilyProperties.data());
  
-    PING;
     // Get list of supported extensions
     uint32_t devExtCount = 0;
     vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &devExtCount, nullptr);
@@ -3492,7 +3476,6 @@ struct Context {
       return -1;
     };
 
-    PING;
     const float defaultQueuePriority(0.0f);
 
     // Graphics queue
@@ -3531,7 +3514,6 @@ struct Context {
     //   // Else we use the same queue
     //   queueFamilyIndices.compute = queueFamilyIndices.graphics;
     // }
-    PING;
 
     // Dedicated transfer queue
     // if (requestedQueueTypes & VK_QUEUE_TRANSFER_BIT)
@@ -3620,7 +3602,6 @@ struct Context {
     gprt::vkGetBufferDeviceAddress
       = reinterpret_cast<PFN_vkGetBufferDeviceAddressKHR>
       (vkGetDeviceProcAddr(logicalDevice, "vkGetBufferDeviceAddressKHR"));
-    PING; PRINT(gprt::vkGetBufferDeviceAddress);
     
     gprt::vkCmdBuildAccelerationStructures = reinterpret_cast<PFN_vkCmdBuildAccelerationStructuresKHR>(
                                                                                                        vkGetDeviceProcAddr(logicalDevice, "vkCmdBuildAccelerationStructuresKHR"));
@@ -3717,12 +3698,9 @@ struct Context {
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.compute, 0, &computeQueue);
     vkGetDeviceQueue(logicalDevice, queueFamilyIndices.transfer, 0, &transferQueue);
 
-    PING;
     // 7. Create a module for internal device entry points
     radixSortModule = new Module(sortDeviceCode);
-    PING;
     scanModule = new Module(scanDeviceCode);
-    PING;
     
     // // Swapchain semaphores and fences
     // if (requestedFeatures.window) {
@@ -3856,7 +3834,6 @@ struct Context {
     // }
 
     // For texture / sampler arrays, we need some defaults
-    PING;
     {
       const VkImageUsageFlags imageUsageFlags =
         // means we can make an image view required to assign this image to a
@@ -3883,7 +3860,6 @@ struct Context {
         new Texture(physicalDevice, logicalDevice, graphicsCommandBuffer, graphicsQueue, imageUsageFlags,
                     memoryUsageFlags, VK_IMAGE_TYPE_3D, VK_FORMAT_R8G8B8A8_SRGB, 1, 1, 1, false);
 
-      PING;
       const VkBufferUsageFlags bufferUsageFlags =
         // means we can get this buffer's address with vkGetBufferDeviceAddress
         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT |
@@ -3893,20 +3869,12 @@ struct Context {
         VK_BUFFER_USAGE_TRANSFER_DST_BIT |
         // means we can use this buffer as a storage buffer resource
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-      PING;
-      PRINT((int*)physicalDevice);
-      PRINT((int*)logicalDevice);
-      PRINT((int*)graphicsCommandBuffer);
-      PRINT((int*)graphicsQueue);
-      PRINT((int*)allocator);
       
       defaultBuffer = new Buffer(physicalDevice, logicalDevice, allocator, graphicsCommandBuffer, graphicsQueue,
                                  bufferUsageFlags, memoryUsageFlags, 1, 16);
-      PING;
     }
 
     // For the SBT record descriptor for raster shaders
-    PING;
     {
       VkDescriptorSetLayoutBinding binding{};
       binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -3928,7 +3896,6 @@ struct Context {
       poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
       poolSize.descriptorCount = 1;
 
-    PING;
       VkDescriptorPoolCreateInfo descriptorPoolInfo{};
       descriptorPoolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
       descriptorPoolInfo.poolSizeCount = 1;
@@ -3947,7 +3914,6 @@ struct Context {
       VK_CHECK_RESULT(vkAllocateDescriptorSets(logicalDevice, &descriptorSetAllocateInfo, &rasterRecordDescriptorSet));
     }
 
-    PING;
     // For the SBT record descriptor for compute shaders
     {
       VkDescriptorSetLayoutBinding binding{};
@@ -3989,7 +3955,6 @@ struct Context {
       VK_CHECK_RESULT(vkAllocateDescriptorSets(logicalDevice, &descriptorSetAllocateInfo, &computeRecordDescriptorSet));
     }
 
-    PING;
     // // Init imgui
     // if (requestedFeatures.window) {
     // PING;
@@ -4030,11 +3995,8 @@ struct Context {
 
     // Finally, setup the internal shader stages and build an initial shader binding table
     setupInternalPrograms();
-    PING;
     buildPipeline();
-    PING;
     buildSBT(GPRT_SBT_ALL);
-    PING;
   };
 
   void destroy() {
