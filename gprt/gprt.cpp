@@ -861,7 +861,6 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice logicalDevice, VmaAlloc
                VkMemoryPropertyFlags _memoryPropertyFlags, VkDeviceSize _size, VkDeviceSize _alignment,
                void *data)
 {
-
   // Hunt for an existing free virtual address for this buffer
   for (uint32_t i = 0; i < Buffer::buffers.size(); ++i) {
     if (Buffer::buffers[i] == nullptr) {
@@ -7551,9 +7550,12 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
     computeRecordBuffer->unmap();
   }
+  PING;
 }
 
-void Context::buildPipeline() {
+void Context::buildPipeline()
+{
+  PING;
   // If the number of textures has changed, we need to make a new
   // descriptor pool
   PING;
@@ -8486,6 +8488,7 @@ void Context::buildPipeline() {
       PING;
       VkResult err = gprt::vkCreateRayTracingPipelines(logicalDevice, VK_NULL_HANDLE, VK_NULL_HANDLE, 1,
                                                        &rayTracingPipelineCI, nullptr, &raytracingPipeline);
+      PING;
       if (err) {
         LOG_ERROR("failed to create ray tracing pipeline! Are all entrypoint names correct? \n" + errorString(err));
       }
@@ -8497,6 +8500,7 @@ void Context::buildPipeline() {
 
   // Build / update the compute pipelines if required
   if (computePipelinesOutOfDate) {
+    PING; PRINT(Compute::computes.size());
     for (uint32_t i = 0; i < Compute::computes.size(); ++i) {
       if (!Compute::computes[i])
         continue;
@@ -8509,6 +8513,7 @@ void Context::buildPipeline() {
 
   // Build / update the raster pipelines if required
   if (rasterPipelinesOutOfDate) {
+    PING; PRINT(GeomType::geomTypes.size());
     for (uint32_t i = 0; i < GeomType::geomTypes.size(); ++i) {
       if (!GeomType::geomTypes[i])
         continue;
@@ -8521,6 +8526,7 @@ void Context::buildPipeline() {
     }
     rasterPipelinesOutOfDate = false;
   }
+  PING;
 }
 
 
