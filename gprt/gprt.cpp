@@ -345,7 +345,7 @@ struct Stage {
   std::string entryPoint;
   VkPipelineLayout layout;
   VkShaderModule module;
-  VkPipeline pipeline;
+  VkPipeline pipeline = 0;
 };
 
 struct Module {
@@ -1930,18 +1930,27 @@ struct Compute : public SBTEntry {
                      VkDescriptorSetLayout texture3DDescriptorSetLayout,
                      VkDescriptorSetLayout bufferDescriptorSetLayout)
   {
+    PING;
     // If we already have a pipeline layout, free it so that we can make a new one
+    PRINT(pipelineLayout);
     if (pipelineLayout) {
+      PING;
       vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
+      PING;
       pipelineLayout = VK_NULL_HANDLE;
+      PING;
     }
-
+    
+    PING;
+    PRINT(pipeline);
     // If we already have a pipeline, free it so that we can make a new one
     if (pipeline) {
+      PING;
       vkDestroyPipeline(logicalDevice, pipeline, nullptr);
+      PING;
       pipeline = VK_NULL_HANDLE;
     }
-
+    PING;
     // currently not using cache.
     VkPipelineCache cache = VK_NULL_HANDLE;
 
@@ -1952,6 +1961,7 @@ struct Compute : public SBTEntry {
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo = {};
     pipelineLayoutCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    PING;
     std::vector<VkDescriptorSetLayout> layouts = {recordDescriptorSetLayout, samplerDescriptorSetLayout,   
                                                   texture1DDescriptorSetLayout, texture2DDescriptorSetLayout, 
                                                   texture3DDescriptorSetLayout, bufferDescriptorSetLayout};
@@ -1964,17 +1974,21 @@ struct Compute : public SBTEntry {
       throw std::runtime_error("failed to create pipeline layout!");
     }
 
+    PING;
     VkComputePipelineCreateInfo computePipelineCreateInfo = {};
     computePipelineCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     computePipelineCreateInfo.layout = pipelineLayout;
     computePipelineCreateInfo.flags = 0;
     computePipelineCreateInfo.stage = shaderStage;
 
+    PING;
     // If the below function is crashing, double check that all parameters to the compute kernel are tagged as "uniform".
     VkResult err = vkCreateComputePipelines(logicalDevice, cache, 1, &computePipelineCreateInfo, nullptr, &pipeline);
+    PING;
     if (err) {
       LOG_ERROR("failed to create compute pipeline! Please verify that \"" + entryPoint + "\" is an existing entrypoint name\n" + errorString(err));
     }
+    PING;
   }
 
   void destroy() {
@@ -2219,6 +2233,12 @@ struct GeomType : public SBTEntry {
   std::vector<bool> pixelShaderUsed;
   std::vector<bool> closestNeighborShaderUsed;
 
+    // During pipeline builds, these vectors cache the offsets of stages
+  // so that they can be referenced for each instance.
+  std::vector<int> closestHitShaderStageAddress;
+  std::vector<int> intersectionShaderStageAddress;
+  std::vector<int> anyHitShaderStageAddress;
+
   // Optional resources for rasterizing geometry
   struct RasterData {
     uint32_t width = -1;
@@ -2268,6 +2288,10 @@ struct GeomType : public SBTEntry {
     vertexShaderUsed.resize(numRayTypes, false);
     pixelShaderUsed.resize(numRayTypes, false);
     closestNeighborShaderUsed.resize(numRayTypes, false);
+
+    closestHitShaderStageAddress.resize(numRayTypes, -1);
+    anyHitShaderStageAddress.resize(numRayTypes, -1);
+    intersectionShaderStageAddress.resize(numRayTypes, -1);
 
     raster.resize(numRayTypes);
 
@@ -2846,286 +2870,286 @@ struct AABBGeomType : public GeomType {
 struct Accel;
 
 VkInstance globalInstance;
-    std::vector<std::string> supportedInstanceExtensions;
-    std::vector<const char *> enabledDeviceExtensions;
-    std::vector<const char *> enabledInstanceExtensions;
+std::vector<std::string> supportedInstanceExtensions;
+std::vector<const char *> enabledDeviceExtensions;
+std::vector<const char *> enabledInstanceExtensions;
 
 
-  std::vector<VkPhysicalDevice> getUsableDevices()
-  {
-    static std::vector<VkPhysicalDevice> usableDevices;
-    static bool alreadyQueried = false;
-    if (alreadyQueried) return usableDevices;
-    alreadyQueried = true;
+std::vector<VkPhysicalDevice> getUsableDevices()
+{
+  static std::vector<VkPhysicalDevice> usableDevices;
+  static bool alreadyQueried = false;
+  if (alreadyQueried) return usableDevices;
+  alreadyQueried = true;
   
-    static VkApplicationInfo appInfo;
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "GPRT";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "GPRT";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_2;
-    appInfo.pNext = VK_NULL_HANDLE;
+  static VkApplicationInfo appInfo;
+  appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+  appInfo.pApplicationName = "GPRT";
+  appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.pEngineName = "GPRT";
+  appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  appInfo.apiVersion = VK_API_VERSION_1_2;
+  appInfo.pNext = VK_NULL_HANDLE;
 
-    /// 1. Create Instance
-    std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
+  /// 1. Create Instance
+  std::vector<const char *> instanceExtensions;   // = { VK_KHR_SURFACE_EXTENSION_NAME };
 #if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-    instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+  instanceExtensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+  instanceExtensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 #endif
 
-    // Get extensions supported by the instance and store for later use
-    uint32_t instExtCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
-    if (instExtCount > 0) {
-      std::vector<VkExtensionProperties> extensions(instExtCount);
-      if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
-        for (VkExtensionProperties extension : extensions) {
-          supportedInstanceExtensions.push_back(extension.extensionName);
-        }
+  // Get extensions supported by the instance and store for later use
+  uint32_t instExtCount = 0;
+  vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, nullptr);
+  if (instExtCount > 0) {
+    std::vector<VkExtensionProperties> extensions(instExtCount);
+    if (vkEnumerateInstanceExtensionProperties(nullptr, &instExtCount, &extensions.front()) == VK_SUCCESS) {
+      for (VkExtensionProperties extension : extensions) {
+        supportedInstanceExtensions.push_back(extension.extensionName);
       }
     }
-
-    // Enabled requested instance extensions
-    if (enabledInstanceExtensions.size() > 0) {
-      for (const char *enabledExtension : enabledInstanceExtensions) {
-        // Output message if requested extension is not available
-        if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
-            supportedInstanceExtensions.end()) {
-          std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
-        }
-        instanceExtensions.push_back(enabledExtension);
-      }
-    }
-
-    VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
-    VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
-    validationFeatures.disabledValidationFeatureCount = 0;
-    validationFeatures.enabledValidationFeatureCount = 1;
-    validationFeatures.pDisabledValidationFeatures = nullptr;
-    validationFeatures.pEnabledValidationFeatures = enabled;
-
-    VkInstanceCreateInfo instanceCreateInfo{};
-    instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    instanceCreateInfo.pApplicationInfo = &appInfo;
-    // instanceCreateInfo.pNext = VK_NULL_HANDLE;
-
-    if (requestedFeatures.debugPrintf) {
-      instanceCreateInfo.pNext = &validationFeatures;
-    } else {
-      LOG_WARNING("Debug printf disabled");
-      instanceCreateInfo.pNext = VK_NULL_HANDLE;
-    }
-
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
-
-    // Useful to disable, since some profiling tools don't support this.
-    if (requestedFeatures.debugPrintf) {
-      instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
-
-    if (instanceExtensions.size() > 0) {
-      instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
-      instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
-    }
-
-    
-    // need this for printf to work
-    const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
-    instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
-    instanceCreateInfo.enabledLayerCount = 1;
-
-    VkResult err;
-
-    err = vkCreateInstance(&instanceCreateInfo, nullptr, &globalInstance);
-    if (err) {
-      LOG_ERROR("failed to create instance! : \n" + errorString(err));
-    }
-
-    // Setup debug printf callback
-    if (requestedFeatures.debugPrintf) {
-      gprt::vkCreateDebugUtilsMessengerEXT
-        = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>
-        (vkGetInstanceProcAddr(globalInstance, "vkCreateDebugUtilsMessengerEXT"));
-      gprt::vkDestroyDebugUtilsMessengerEXT
-        = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>
-        (vkGetInstanceProcAddr(globalInstance, "vkDestroyDebugUtilsMessengerEXT"));
-
-      VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
-      debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-      debugUtilsMessengerCI.messageSeverity = 
-        // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
-        // | VK_DEBUG_REPORT_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
-        // | VK_DEBUG_REPORT_ERROR_BIT_EXT
-        VK_DEBUG_REPORT_DEBUG_BIT_EXT
-        ;
-      debugUtilsMessengerCI.messageType =
-        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-      debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
-      VkResult result =
-        gprt::vkCreateDebugUtilsMessengerEXT(globalInstance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
-      assert(result == VK_SUCCESS);
-    }
-
-    /// 2. Select a Physical Device
-    
-    // Physical device
-    uint32_t gpuCount = 0;
-    // Get number of available physical devices
-    VK_CHECK_RESULT(vkEnumeratePhysicalDevices(globalInstance, &gpuCount, nullptr));
-    if (gpuCount == 0) {
-      LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
-    }
-    // Enumerate devices
-    std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
-    err = vkEnumeratePhysicalDevices(globalInstance, &gpuCount, physicalDevices.data());
-    if (err) {
-      LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
-    }
-
-    // GPU selection
-
-    auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
-      switch (type) {
-#define STR(r)                                  \
-        case VK_PHYSICAL_DEVICE_TYPE_##r:       \
-          return #r
-        STR(OTHER);
-        STR(INTEGRATED_GPU);
-        STR(DISCRETE_GPU);
-        STR(VIRTUAL_GPU);
-        STR(CPU);
-#undef STR
-      default:
-        return "UNKNOWN_DEVICE_TYPE";
-      }
-    };
-
-    auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
-      return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
-              supportedExtensions.end());
-    };
-
-    /* function that checks if the selected physical device meets requirements
-     */
-    auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
-      uint32_t extensionCount;
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
-
-      std::vector<VkExtensionProperties> availableExtensions(extensionCount);
-      vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
-
-      std::set<std::string> requiredExtensions;
-      for (auto &cstr : deviceExtensions) {
-        requiredExtensions.insert(std::string(cstr));
-      }
-
-      for (const auto &extension : availableExtensions) {
-        requiredExtensions.erase(extension.extensionName);
-      }
-
-      return requiredExtensions.empty();
-    };
-
-    // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
-    // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
-    // components, without additional requirements.
-    enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
-
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-
-    // Ray tracing related extensions required
-    enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
-
-    // Required by VK_KHR_acceleration_structure
-    enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-    enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
-
-    // Required for VK_KHR_ray_tracing_pipeline
-    enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
-    
-    // required for vulkan memory model stuff
-    enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
-
-    // Required by VK_KHR_spirv_1_4
-    enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-
-    // if (requestedFeatures.window) {
-    //   // If the device will be used for presenting to a display via a swapchain
-    //   // we need to request the swapchain extension
-    //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    // }
-
-    if (requestedFeatures.rayQueries) {
-      // If the device will be using ray queries for inline ray tracing,
-      // we need to explicitly request this.
-      enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
-    }
-
-    if (requestedFeatures.invocationReordering) {
-      enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
-    }
-
-#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
-    enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
-#endif
-
-    // Select physical device to be used
-    // Defaults to the first device unless specified by command line
-    // uint32_t selectedDevice = -1;   // TODO
-
-    // std::vector<uint32_t> usableDevices;
-    // uint32_t *usableDevices 
-    // int numUsableFound = 0;
-    LOG_INFO("Searching for usable Vulkan physical device...");
-    for (uint32_t i = 0; i < gpuCount; i++) {
-      VkPhysicalDeviceProperties deviceProperties;
-      vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
-      std::string message =
-        std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
-      message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
-      message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
-        std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
-        std::to_string(deviceProperties.apiVersion & 0xfff);
-      LOG_INFO(message);
-
-      if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
-        // usableDevices[numUsableFound++] = i;
-        std::cout << "##### found usable device: " << i << ", physical " << physicalDevices[i] << std::endl;
-        usableDevices.push_back(physicalDevices[i]);
-        // usableDevices.push_back(i);
-        LOG_INFO("\tFound usable device");
-        // } else {
-        //   // Get list of supported extensions
-        //   uint32_t devExtCount = 0;
-        //   vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
-        //   std::vector<VkExtensionProperties> extensions(devExtCount);
-        //   std::vector<std::string> supportedExtensions;
-        //   if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
-        //       VK_SUCCESS) {
-        //     for (auto ext : extensions) {
-        //       supportedExtensions.push_back(ext.extensionName);
-        //     }
-        //   }
-
-        //   for (const char *enabledExtension : enabledDeviceExtensions) {
-        //     if (!extensionSupported(enabledExtension, supportedExtensions)) {
-        //       LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
-        //                   << "\" is not present.");
-        //     }
-        //   }
-      }
-    }
-    return usableDevices;
   }
+
+  // Enabled requested instance extensions
+  if (enabledInstanceExtensions.size() > 0) {
+    for (const char *enabledExtension : enabledInstanceExtensions) {
+      // Output message if requested extension is not available
+      if (std::find(supportedInstanceExtensions.begin(), supportedInstanceExtensions.end(), enabledExtension) ==
+          supportedInstanceExtensions.end()) {
+        std::cerr << "Enabled instance extension \"" << enabledExtension << "\" is not present at instance level\n";
+      }
+      instanceExtensions.push_back(enabledExtension);
+    }
+  }
+
+  VkValidationFeatureEnableEXT enabled[] = {VK_VALIDATION_FEATURE_ENABLE_DEBUG_PRINTF_EXT};
+  VkValidationFeaturesEXT validationFeatures{VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+  validationFeatures.disabledValidationFeatureCount = 0;
+  validationFeatures.enabledValidationFeatureCount = 1;
+  validationFeatures.pDisabledValidationFeatures = nullptr;
+  validationFeatures.pEnabledValidationFeatures = enabled;
+
+  VkInstanceCreateInfo instanceCreateInfo{};
+  instanceCreateInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+  instanceCreateInfo.pApplicationInfo = &appInfo;
+  // instanceCreateInfo.pNext = VK_NULL_HANDLE;
+
+  if (requestedFeatures.debugPrintf) {
+    instanceCreateInfo.pNext = &validationFeatures;
+  } else {
+    LOG_WARNING("Debug printf disabled");
+    instanceCreateInfo.pNext = VK_NULL_HANDLE;
+  }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+  instanceCreateInfo.flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
+  // Useful to disable, since some profiling tools don't support this.
+  if (requestedFeatures.debugPrintf) {
+    instanceExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  }
+
+  if (instanceExtensions.size() > 0) {
+    instanceCreateInfo.enabledExtensionCount = (uint32_t) instanceExtensions.size();
+    instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data();
+  }
+
+    
+  // need this for printf to work
+  const char* layerNames[1] = {"VK_LAYER_KHRONOS_validation"};
+  instanceCreateInfo.ppEnabledLayerNames = &layerNames[0];
+  instanceCreateInfo.enabledLayerCount = 1;
+
+  VkResult err;
+
+  err = vkCreateInstance(&instanceCreateInfo, nullptr, &globalInstance);
+  if (err) {
+    LOG_ERROR("failed to create instance! : \n" + errorString(err));
+  }
+
+  // Setup debug printf callback
+  if (requestedFeatures.debugPrintf) {
+    gprt::vkCreateDebugUtilsMessengerEXT
+      = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>
+      (vkGetInstanceProcAddr(globalInstance, "vkCreateDebugUtilsMessengerEXT"));
+    gprt::vkDestroyDebugUtilsMessengerEXT
+      = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>
+      (vkGetInstanceProcAddr(globalInstance, "vkDestroyDebugUtilsMessengerEXT"));
+
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCI{};
+    debugUtilsMessengerCI.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCI.messageSeverity = 
+      // VK_DEBUG_REPORT_INFORMATION_BIT_EXT
+      // | VK_DEBUG_REPORT_WARNING_BIT_EXT
+      // | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT
+      // | VK_DEBUG_REPORT_ERROR_BIT_EXT
+      VK_DEBUG_REPORT_DEBUG_BIT_EXT
+      ;
+    debugUtilsMessengerCI.messageType =
+      VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+    debugUtilsMessengerCI.pfnUserCallback = debugUtilsMessengerCallback;
+    VkResult result =
+      gprt::vkCreateDebugUtilsMessengerEXT(globalInstance, &debugUtilsMessengerCI, nullptr, &gprt::debugUtilsMessenger);
+    assert(result == VK_SUCCESS);
+  }
+
+  /// 2. Select a Physical Device
+    
+  // Physical device
+  uint32_t gpuCount = 0;
+  // Get number of available physical devices
+  VK_CHECK_RESULT(vkEnumeratePhysicalDevices(globalInstance, &gpuCount, nullptr));
+  if (gpuCount == 0) {
+    LOG_ERROR("No device with Vulkan support found : \n" + errorString(err));
+  }
+  // Enumerate devices
+  std::vector<VkPhysicalDevice> physicalDevices(gpuCount);
+  err = vkEnumeratePhysicalDevices(globalInstance, &gpuCount, physicalDevices.data());
+  if (err) {
+    LOG_ERROR("Could not enumerate physical devices : \n" + errorString(err));
+  }
+
+  // GPU selection
+
+  auto physicalDeviceTypeString = [](VkPhysicalDeviceType type) -> std::string {
+    switch (type) {
+#define STR(r)                                  \
+      case VK_PHYSICAL_DEVICE_TYPE_##r:         \
+        return #r
+      STR(OTHER);
+      STR(INTEGRATED_GPU);
+      STR(DISCRETE_GPU);
+      STR(VIRTUAL_GPU);
+      STR(CPU);
+#undef STR
+    default:
+      return "UNKNOWN_DEVICE_TYPE";
+    }
+  };
+
+  auto extensionSupported = [](std::string extension, std::vector<std::string> supportedExtensions) -> bool {
+    return (std::find(supportedExtensions.begin(), supportedExtensions.end(), extension) !=
+            supportedExtensions.end());
+  };
+
+  /* function that checks if the selected physical device meets requirements
+   */
+  auto checkDeviceExtensionSupport = [](VkPhysicalDevice device, std::vector<const char *> deviceExtensions) -> bool {
+    uint32_t extensionCount;
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+    std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+    std::set<std::string> requiredExtensions;
+    for (auto &cstr : deviceExtensions) {
+      requiredExtensions.insert(std::string(cstr));
+    }
+
+    for (const auto &extension : availableExtensions) {
+      requiredExtensions.erase(extension.extensionName);
+    }
+
+    return requiredExtensions.empty();
+  };
+
+  // This makes structs follow a C-like structure. Modifies alignment rules for uniform buffers,
+  // sortage buffers and push constants, allowing non-scalar types to be aligned solely based on the size of their
+  // components, without additional requirements.
+  enabledDeviceExtensions.push_back(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
+
+  // Ray tracing related extensions required
+  enabledDeviceExtensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+
+  // Ray tracing related extensions required
+  enabledDeviceExtensions.push_back(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+  enabledDeviceExtensions.push_back(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+
+  // Required by VK_KHR_acceleration_structure
+  enabledDeviceExtensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+  enabledDeviceExtensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+  enabledDeviceExtensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+  enabledDeviceExtensions.push_back(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
+
+  // Required for VK_KHR_ray_tracing_pipeline
+  enabledDeviceExtensions.push_back(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+    
+  // required for vulkan memory model stuff
+  enabledDeviceExtensions.push_back(VK_KHR_VULKAN_MEMORY_MODEL_EXTENSION_NAME);
+
+  // Required by VK_KHR_spirv_1_4
+  enabledDeviceExtensions.push_back(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+
+  // if (requestedFeatures.window) {
+  //   // If the device will be used for presenting to a display via a swapchain
+  //   // we need to request the swapchain extension
+  //   enabledDeviceExtensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+  // }
+
+  if (requestedFeatures.rayQueries) {
+    // If the device will be using ray queries for inline ray tracing,
+    // we need to explicitly request this.
+    enabledDeviceExtensions.push_back(VK_KHR_RAY_QUERY_EXTENSION_NAME);
+  }
+
+  if (requestedFeatures.invocationReordering) {
+    enabledDeviceExtensions.push_back(VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME);
+  }
+
+#if defined(VK_USE_PLATFORM_MACOS_MVK) && (VK_HEADER_VERSION >= 216)
+  enabledDeviceExtensions.push_back(VK_KHR_PORTABILITY_SUBSET_EXTENSION_NAME);
+#endif
+
+  // Select physical device to be used
+  // Defaults to the first device unless specified by command line
+  // uint32_t selectedDevice = -1;   // TODO
+
+  // std::vector<uint32_t> usableDevices;
+  // uint32_t *usableDevices 
+  // int numUsableFound = 0;
+  LOG_INFO("Searching for usable Vulkan physical device...");
+  for (uint32_t i = 0; i < gpuCount; i++) {
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevices[i], &deviceProperties);
+    std::string message =
+      std::string("Device [") + std::to_string(i) + std::string("] : ") + std::string(deviceProperties.deviceName);
+    message += std::string(", Type : ") + physicalDeviceTypeString(deviceProperties.deviceType);
+    message += std::string(", API : ") + std::to_string(deviceProperties.apiVersion >> 22) + std::string(".") +
+      std::to_string(((deviceProperties.apiVersion >> 12) & 0x3ff)) + std::string(".") +
+      std::to_string(deviceProperties.apiVersion & 0xfff);
+    LOG_INFO(message);
+
+    if (checkDeviceExtensionSupport(physicalDevices[i], enabledDeviceExtensions)) {
+      // usableDevices[numUsableFound++] = i;
+      std::cout << "##### found usable device: " << i << ", physical " << physicalDevices[i] << std::endl;
+      usableDevices.push_back(physicalDevices[i]);
+      // usableDevices.push_back(i);
+      LOG_INFO("\tFound usable device");
+      // } else {
+      //   // Get list of supported extensions
+      //   uint32_t devExtCount = 0;
+      //   vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, nullptr);
+      //   std::vector<VkExtensionProperties> extensions(devExtCount);
+      //   std::vector<std::string> supportedExtensions;
+      //   if (vkEnumerateDeviceExtensionProperties(physicalDevices[i], nullptr, &devExtCount, &extensions.front()) ==
+      //       VK_SUCCESS) {
+      //     for (auto ext : extensions) {
+      //       supportedExtensions.push_back(ext.extensionName);
+      //     }
+      //   }
+
+      //   for (const char *enabledExtension : enabledDeviceExtensions) {
+      //     if (!extensionSupported(enabledExtension, supportedExtensions)) {
+      //       LOG_WARNING("\tDevice unusable... Requested device extension \"" << enabledExtension
+      //                   << "\" is not present.");
+      //     }
+      //   }
+    }
+  }
+  return usableDevices;
+}
 
   
 struct Context {
@@ -6380,12 +6404,14 @@ struct InstanceAccel : public Accel {
   void build(GPRTBuildMode mode, bool allowCompaction, bool minimizeMemory) {
     VkResult err;
 
+    PING; 
     // Compute the instance offset for the SBT record.
     //   The instance shader binding table record offset is the total number
     //   of geometries referenced by all instances up until this instance tree
     //   multiplied by the number of ray types.
     instanceOffset = 0;
     for (uint32_t i = 0; i < context->accels.size(); ++i) {
+      assert(context->accels[i]);
       if (context->accels[i] == this)
         break;
       if (context->accels[i]->getType() == GPRT_INSTANCE_ACCEL) {
@@ -6394,7 +6420,8 @@ struct InstanceAccel : public Accel {
         instanceOffset += numGeometry * requestedFeatures.numRayTypes;
       }
     }
-    
+
+    PING;
     // If the visibility mask address is -1, we assume a mask of 0xFF
     visibilityMasksAddress = -1;
     if (visibilityMasks.buffer != nullptr) {
@@ -6449,6 +6476,7 @@ struct InstanceAccel : public Accel {
 
       instancesBuffer->map();
 
+      PING;
       for (uint32_t i = 0; i < numInstances; ++i) {
         VkAccelerationStructureInstanceKHR *instance = &((VkAccelerationStructureInstanceKHR *)instancesBuffer->mapped)[i];
 
@@ -6582,6 +6610,7 @@ struct InstanceAccel : public Accel {
                                                &accelerationStructureBuildSizesInfo);
 
     // If previously compacted, free those resources up.
+    PING;
     if (compactBuffer) {
       // Destroy old accel handle too
       gprt::vkDestroyAccelerationStructure(context->logicalDevice, compactAccelerationStructure, nullptr);
@@ -6652,6 +6681,7 @@ struct InstanceAccel : public Accel {
                    accelerationStructureProperties.minAccelerationStructureScratchOffsetAlignment);
     }
 
+    PING;
     VkAccelerationStructureBuildGeometryInfoKHR accelerationBuildGeometryInfo{};
     accelerationBuildGeometryInfo.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
     accelerationBuildGeometryInfo.type = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR;
@@ -7235,6 +7265,7 @@ size_t Context::getNumHitRecords() {
 }
 
 void Context::buildSBT(GPRTBuildSBTFlags flags) {
+  PING;
   auto alignedSize = [](uint32_t value, uint32_t alignment) -> uint32_t {
     return (value + alignment - 1) & ~(alignment - 1);
   };
@@ -7354,6 +7385,7 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
       raygenTable->unmap();
     }
 
+    PING;
     // Miss records
     if ((flags & GPRTBuildSBTFlags::GPRT_SBT_MISS) != 0 && missPrograms.size() > 0) {
       missTable->map();
@@ -7495,6 +7527,7 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
     }
   }
 
+  PING;
   // Update geometry record data in the record buffer for raster programs
   if ((flags & GPRTBuildSBTFlags::GPRT_SBT_RASTER) != 0) {
     rasterRecordBuffer->map();
@@ -7523,6 +7556,7 @@ void Context::buildSBT(GPRTBuildSBTFlags flags) {
 void Context::buildPipeline() {
   // If the number of textures has changed, we need to make a new
   // descriptor pool
+  PING;
   if (samplerDescriptorPool && previousNumSamplers != Sampler::samplers.size()) {
     vkFreeDescriptorSets(logicalDevice, samplerDescriptorPool, 1, &samplerDescriptorSet);
     vkDestroyDescriptorSetLayout(logicalDevice, samplerDescriptorSetLayout, nullptr);
@@ -7531,6 +7565,7 @@ void Context::buildPipeline() {
 
     LOG_INFO("Reallocating texture sampler space");
   }
+  PING;
   if (!samplerDescriptorPool) {
     VkDescriptorPoolSize poolSize;
     poolSize.type = VK_DESCRIPTOR_TYPE_SAMPLER;
@@ -7593,6 +7628,7 @@ void Context::buildPipeline() {
     std::vector<VkWriteDescriptorSet> writeDescriptorSets(1);
 
     // Image descriptors for the sampler array
+  PING;
     std::vector<VkDescriptorImageInfo> samplerDescriptors(poolSize.descriptorCount);
     for (size_t i = 0; i < poolSize.descriptorCount; i++) {
       VkSampler sampler = defaultSampler->sampler;
@@ -7625,6 +7661,7 @@ void Context::buildPipeline() {
     previousNumSamplers = poolSize.descriptorCount;
   }
 
+  PING;
   // If the number of texture1ds has changed, we need to make a new
   // descriptor pool
   if (texture1DDescriptorPool && previousNumTexture1Ds != Texture::texture1Ds.size()) {
@@ -7635,6 +7672,7 @@ void Context::buildPipeline() {
 
     LOG_INFO("Reallocating texture1D space");
   }
+  PING;
   if (!texture1DDescriptorPool) {
     VkDescriptorPoolSize poolSize;
     poolSize.type = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
@@ -7711,6 +7749,7 @@ void Context::buildPipeline() {
       textureDescriptors[i].imageLayout = layout;
     }
 
+  PING;
     writeDescriptorSets[0] = {};
     writeDescriptorSets[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
     writeDescriptorSets[0].dstBinding = 0;
@@ -7721,6 +7760,7 @@ void Context::buildPipeline() {
     writeDescriptorSets[0].dstSet = texture1DDescriptorSet;
     writeDescriptorSets[0].pImageInfo = textureDescriptors.data();
 
+  PING;
     vkUpdateDescriptorSets(logicalDevice, static_cast<uint32_t>(writeDescriptorSets.size()),
                            writeDescriptorSets.data(), 0, nullptr);
 
@@ -7731,6 +7771,7 @@ void Context::buildPipeline() {
     rasterPipelinesOutOfDate = true;
 
     // Finally, keep track of if the texture count here changes
+  PING;
     previousNumTexture1Ds = (uint32_t)Texture::texture1Ds.size();
   }
 
@@ -8278,16 +8319,34 @@ void Context::buildPipeline() {
 
     // Hit groups
 
+    // First, clear any previously assigned stage addresses
+    {
+      for (auto geomType : GeomType::geomTypes) {
+        geomType->closestHitShaderStageAddress = std::vector<int>(requestedFeatures.numRayTypes, -1);
+        geomType->anyHitShaderStageAddress = std::vector<int>(requestedFeatures.numRayTypes, -1);
+        geomType->intersectionShaderStageAddress = std::vector<int>(requestedFeatures.numRayTypes, -1);
+      }
+    }
+
+    
     // Go over all TLAS by order they were created
+    std::set<Accel *> alreadyCreated_tlas;
     for (uint32_t tlasID = 0; tlasID < accels.size(); ++tlasID) {
       Accel *tlas = accels[tlasID];
       if (!tlas)
         continue;
+      if (alreadyCreated_tlas.find(tlas) != alreadyCreated_tlas.end())
+        continue;
+      alreadyCreated_tlas.insert(tlas);
       if (tlas->getType() == GPRT_INSTANCE_ACCEL) {
         // Iterate over all BLAS stored in the TLAS
+        std::set<Accel *> alreadyCreated_blas;
         InstanceAccel *instanceAccel = (InstanceAccel *) tlas;
         for (uint32_t blasID = 0; blasID < instanceAccel->instances.size(); ++blasID) {
           Accel *blas = instanceAccel->instances[blasID];
+          if (alreadyCreated_blas.find(blas) != alreadyCreated_blas.end())
+            continue;
+          alreadyCreated_blas.insert(blas);
           // Handle different BLAS types...
           if (blas->getType() == GPRT_TRIANGLE_ACCEL) {
             TriangleAccel *triAccel = (TriangleAccel *) blas;
@@ -8305,20 +8364,35 @@ void Context::buildPipeline() {
                 shaderGroup.anyHitShader = VK_SHADER_UNUSED_KHR;
                 shaderGroup.intersectionShader = VK_SHADER_UNUSED_KHR;
 
-                // populate hit group programs using geometry type
+                // populate hit group programs using geometry type, recycling any previously referenced shader stages
                 if (geom->geomType->closestHitShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
-                  shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
+                  // shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->closestHitShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
+                    geom->geomType->closestHitShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.closestHitShader = geom->geomType->closestHitShaderStageAddress[rayType];
                 }
 
                 if (geom->geomType->anyHitShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
-                  shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
+                  // shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->anyHitShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
+                    geom->geomType->anyHitShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.anyHitShader = geom->geomType->anyHitShaderStageAddress[rayType];
                 }
 
                 if (geom->geomType->intersectionShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
-                  shaderGroup.intersectionShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
+                  // shaderGroup.intersectionShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->intersectionShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
+                    geom->geomType->intersectionShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.intersectionShader = geom->geomType->intersectionShaderStageAddress[rayType];
                 }
                 shaderGroups.push_back(shaderGroup);
               }
@@ -8341,18 +8415,33 @@ void Context::buildPipeline() {
 
                 // populate hit group programs using geometry type
                 if (geom->geomType->closestHitShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
-                  shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
+                  // shaderGroup.closestHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->closestHitShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->closestHitShaderStages[rayType]);
+                    geom->geomType->closestHitShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.closestHitShader = geom->geomType->closestHitShaderStageAddress[rayType];
                 }
 
                 if (geom->geomType->anyHitShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
-                  shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
+                  // shaderGroup.anyHitShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->anyHitShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->anyHitShaderStages[rayType]);
+                    geom->geomType->anyHitShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.anyHitShader = geom->geomType->anyHitShaderStageAddress[rayType];
                 }
 
                 if (geom->geomType->intersectionShaderUsed[rayType]) {
-                  shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
-                  shaderGroup.intersectionShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  // shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
+                  // shaderGroup.intersectionShader = static_cast<uint32_t>(shaderStages.size()) - 1;
+                  if (geom->geomType->intersectionShaderStageAddress[rayType] == -1) {
+                    shaderStages.push_back(geom->geomType->intersectionShaderStages[rayType]);
+                    geom->geomType->intersectionShaderStageAddress[rayType] = int(shaderStages.size() - 1);
+                  }
+                  shaderGroup.intersectionShader = geom->geomType->intersectionShaderStageAddress[rayType];
                 }
                 shaderGroups.push_back(shaderGroup);
               }
@@ -8376,8 +8465,10 @@ void Context::buildPipeline() {
       VkRayTracingPipelineCreateInfoKHR rayTracingPipelineCI{};
       rayTracingPipelineCI.sType = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
       rayTracingPipelineCI.stageCount = static_cast<uint32_t>(shaderStages.size());
+      PRINT(shaderStages.size());
       rayTracingPipelineCI.pStages = shaderStages.data();
       rayTracingPipelineCI.groupCount = static_cast<uint32_t>(shaderGroups.size());
+      PRINT(shaderGroups.size());
       rayTracingPipelineCI.pGroups = shaderGroups.data();
       rayTracingPipelineCI.maxPipelineRayRecursionDepth = requestedFeatures.rayRecursionDepth;
       rayTracingPipelineCI.layout = raytracingPipelineLayout;
@@ -8385,10 +8476,14 @@ void Context::buildPipeline() {
 
       LOG_INFO("Creating VkRayTracingPipelineCreateInfoKHR with max recursion depth of " + std::to_string(requestedFeatures.rayRecursionDepth) + ".");
 
+      PING;
       if (raytracingPipeline != VK_NULL_HANDLE) {
+        PING;
         vkDestroyPipeline(logicalDevice, raytracingPipeline, nullptr);
+        PING;
         raytracingPipeline = VK_NULL_HANDLE;
       }
+      PING;
       VkResult err = gprt::vkCreateRayTracingPipelines(logicalDevice, VK_NULL_HANDLE, VK_NULL_HANDLE, 1,
                                                        &rayTracingPipelineCI, nullptr, &raytracingPipeline);
       if (err) {
@@ -10687,8 +10782,12 @@ GPRT_API void
 gprtBuildShaderBindingTable(GPRTContext _context, GPRTBuildSBTFlags flags) {
   LOG_API_CALL();
   Context *context = (Context *) _context;
+  PING;
+  PRINT(context);
   context->buildPipeline();
+  PING;
   context->buildSBT(flags);
+  PING;
 }
 
 GPRT_API void
